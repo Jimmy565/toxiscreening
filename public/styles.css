@@ -69,6 +69,8 @@ body {
 .status-pill { color: var(--accent-2); border: 1px solid rgba(122, 216, 181, 0.28); border-radius: 999px; padding: 7px 10px; }
 .status-dot { margin-right: 6px; width: 6px; height: 6px; }
 .session-label { color: var(--muted); }
+.account-button { padding: 7px 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); font: 600 0.72rem Arial, sans-serif; }
+.account-button:hover { color: var(--text); border-color: var(--accent); }
 
 h1 {
   margin: 0;

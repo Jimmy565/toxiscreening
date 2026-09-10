@@ -17,9 +17,20 @@ const backToAccountBtn = document.getElementById('back-to-account');
 const newAssessmentBtn = document.getElementById('new-assessment-btn');
 const continueReviewBtn = document.getElementById('continue-review-btn');
 const backToResultsBtn = document.getElementById('back-to-results');
+const accountBtn = document.getElementById('account-btn');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
+
+function resetSession() {
+  currentToken = '';
+  latestResult = null;
+  localStorage.removeItem('toxicity_token');
+  sessionLabel.textContent = 'Guest session';
+  authStatus.textContent = '';
+  authStatus.classList.add('hidden');
+  showStep(1);
+}
 
 function showStep(stepNumber) {
   wizardSteps.forEach((step) => step.classList.toggle('active', step.dataset.step === String(stepNumber)));
@@ -218,6 +229,9 @@ async function loadHistory() {
       `)
       .join('');
   } catch (error) {
+    if (error.message === 'Authentication required.') {
+      resetSession();
+    }
     historyList.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
   }
 }
@@ -306,5 +320,7 @@ newAssessmentBtn.addEventListener('click', () => {
   resultsBox.classList.add('results-empty');
   showStep(2);
 });
+accountBtn.addEventListener('click', resetSession);
 
+showStep(1);
 loadHistory();
