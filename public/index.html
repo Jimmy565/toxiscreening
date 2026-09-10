@@ -20,8 +20,17 @@
         </div>
       </header>
 
-      <main class="layout">
-        <section class="panel auth-panel">
+      <nav class="stepper" aria-label="Screening progress">
+        <div class="step-item active" data-step-indicator="1"><span>01</span><strong>Account</strong></div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step-indicator="2"><span>02</span><strong>Compound</strong></div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step-indicator="3"><span>03</span><strong>Results</strong></div>
+      </nav>
+
+      <main class="layout wizard-layout">
+        <section class="wizard-step active" data-step="1">
+          <section class="panel auth-panel step-panel">
           <div class="panel-heading">
             <div><p class="section-kicker">Workspace</p><h2>Account access</h2></div>
             <span class="panel-icon">01</span>
@@ -40,9 +49,11 @@
           </div>
 
           <div id="auth-status" class="status-box hidden"></div>
+          </section>
         </section>
 
-        <section class="panel search-panel">
+        <section class="wizard-step" data-step="2">
+          <section class="panel search-panel">
           <div class="panel-heading">
             <div><p class="section-kicker">Start here</p><h2>Run a screening check</h2></div>
             <span class="panel-icon accent-icon">02</span>
@@ -69,9 +80,12 @@
               <li>EPA CompTox</li>
             </ul>
           </div>
+            <div class="step-actions"><button type="button" id="back-to-account" class="secondary">Back</button></div>
+          </section>
         </section>
 
-        <section class="panel results-panel">
+        <section class="wizard-step" data-step="3">
+          <section class="panel results-panel">
           <div class="panel-heading">
             <div><p class="section-kicker">Evidence review</p><h2>Assessment results</h2></div>
             <span class="panel-icon accent-icon">03</span>
@@ -83,9 +97,10 @@
           <div class="save-actions">
             <button type="button" id="save-assessment-btn" class="secondary hidden">Save assessment</button>
           </div>
-        </section>
+            <div class="step-actions"><button type="button" id="new-assessment-btn" class="secondary">Run another assessment</button></div>
+          </section>
 
-        <section class="panel history-panel">
+          <section class="panel history-panel">
           <div class="panel-heading">
             <div><p class="section-kicker">Your workspace</p><h2>Saved history</h2></div>
             <span class="panel-icon">04</span>
@@ -93,6 +108,7 @@
           <div id="history-list" class="history-list">
             <p class="muted">Login to view your saved assessments.</p>
           </div>
+          </section>
         </section>
       </main>
     </div>

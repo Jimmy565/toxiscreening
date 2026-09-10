@@ -82,6 +82,22 @@ h1 {
   gap: 24px;
 }
 
+.wizard-layout { display: block; max-width: 760px; margin: 0 auto; }
+.wizard-step { display: none; animation: step-in 0.35s ease both; }
+.wizard-step.active { display: block; }
+.step-panel { min-height: 360px; }
+.step-actions { display: flex; justify-content: flex-start; margin-top: 22px; }
+.step-actions button { width: auto; }
+.stepper { display: flex; align-items: center; max-width: 760px; margin: 0 auto 28px; }
+.step-item { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+.step-item span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 50%; font: 700 0.68rem Arial, sans-serif; }
+.step-item.active { color: var(--text); }
+.step-item.active span { color: #172019; background: var(--accent); border-color: var(--accent); }
+.step-item.complete { color: var(--accent-2); }
+.step-item.complete span { color: #07111c; background: var(--accent-2); border-color: var(--accent-2); }
+.step-line { height: 1px; flex: 1; margin: 0 12px; background: var(--border); }
+@keyframes step-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
 .panel {
   background: rgba(13, 27, 42, 0.88);
   border: 1px solid var(--border);
@@ -343,4 +359,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   }
   .panel { padding: 18px; }
   .auth-actions, .save-actions { flex-direction: column; }
+  .stepper { margin-bottom: 20px; }
+  .step-item strong { display: none; }
+  .step-line { margin: 0 8px; }
 }

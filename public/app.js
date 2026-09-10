@@ -9,9 +9,23 @@ const loginBtn = document.getElementById('login-btn');
 const saveAssessmentBtn = document.getElementById('save-assessment-btn');
 const historyList = document.getElementById('history-list');
 const sessionLabel = document.getElementById('session-label');
+const wizardSteps = [...document.querySelectorAll('[data-step]')];
+const stepIndicators = [...document.querySelectorAll('[data-step-indicator]')];
+const backToAccountBtn = document.getElementById('back-to-account');
+const newAssessmentBtn = document.getElementById('new-assessment-btn');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
+
+function showStep(stepNumber) {
+  wizardSteps.forEach((step) => step.classList.toggle('active', step.dataset.step === String(stepNumber)));
+  stepIndicators.forEach((indicator) => {
+    const indicatorStep = Number(indicator.dataset.stepIndicator);
+    indicator.classList.toggle('active', indicatorStep === stepNumber);
+    indicator.classList.toggle('complete', indicatorStep < stepNumber);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>\'"]/g, (character) => ({
@@ -155,6 +169,7 @@ async function handleAuth(mode) {
     setAuthMessage(`${mode === 'register' ? 'Registered' : 'Logged in'} successfully for ${payload.user.username}.`);
     saveAssessmentBtn.classList.toggle('hidden', !currentToken);
     loadHistory();
+    showStep(2);
   } catch (error) {
     setAuthMessage(error.message, true);
   }
@@ -242,6 +257,7 @@ form.addEventListener('submit', async (event) => {
     }
 
     renderResult(payload);
+    showStep(3);
   } catch (error) {
     resultsBox.innerHTML = `
       <div class="summary-box">
@@ -257,5 +273,11 @@ form.addEventListener('submit', async (event) => {
 registerBtn.addEventListener('click', () => handleAuth('register'));
 loginBtn.addEventListener('click', () => handleAuth('login'));
 saveAssessmentBtn.addEventListener('click', saveAssessment);
+backToAccountBtn.addEventListener('click', () => showStep(1));
+newAssessmentBtn.addEventListener('click', () => {
+  resultsBox.innerHTML = '<p>Enter a compound to retrieve screening data from public online databases.</p>';
+  resultsBox.classList.add('results-empty');
+  showStep(2);
+});
 
 loadHistory();
