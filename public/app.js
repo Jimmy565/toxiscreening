@@ -8,9 +8,20 @@ const registerBtn = document.getElementById('register-btn');
 const loginBtn = document.getElementById('login-btn');
 const saveAssessmentBtn = document.getElementById('save-assessment-btn');
 const historyList = document.getElementById('history-list');
+const sessionLabel = document.getElementById('session-label');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>\'"]/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  }[character]));
+}
 
 function setAuthMessage(message, isError = false) {
   authStatus.textContent = message;
@@ -60,15 +71,15 @@ function renderSources(sources) {
     .map((entry) => {
       const hits = (entry.hits || [])
         .slice(0, 3)
-        .map((hit) => `<li>${hit.name || hit.chemblId || hit.dtxsid || 'Record'}</li>`)
+        .map((hit) => `<li>${escapeHtml(hit.name || hit.chemblId || hit.dtxsid || 'Record')}</li>`)
         .join('');
 
       const additional = entry.formula || entry.molecularWeight ? `<li>Formula: ${entry.formula || 'N/A'}</li><li>MW: ${entry.molecularWeight || 'N/A'}</li>` : '';
 
       return `
         <li class="source-item">
-          <strong>${entry.source}</strong>
-          <div class="source-meta">${entry.evidence || 'Public metadata available.'}</div>
+          <strong>${escapeHtml(entry.source)}</strong>
+          <div class="source-meta">${escapeHtml(entry.evidence || 'Public metadata available.')}</div>
           <ul>${additional}${hits || '<li>No additional metadata available.</li>'}</ul>
         </li>
       `;
@@ -89,11 +100,11 @@ function renderResult(payload) {
 
   resultsBox.innerHTML = `
     <div class="summary-box">
-      <h3>${overview.query}</h3>
-      <p><strong>Status:</strong> ${overview.status}</p>
-      <p><strong>Confidence:</strong> ${scores.confidence}/100 (${overview.quality.label})</p>
-      <p>${overview.dataSummary}</p>
-      <p>${overview.notes.join('<br>')}</p>
+      <div class="result-heading"><div><p class="section-kicker">Screening snapshot</p><h3>${escapeHtml(overview.query)}</h3></div><span class="confidence-mark">${scores.confidence}<small>/100</small></span></div>
+      <div class="result-status">${escapeHtml(overview.status)}</div>
+      <p class="confidence-copy"><strong>Confidence:</strong> ${scores.confidence}/100 (${escapeHtml(overview.quality.label)})</p>
+      <p>${escapeHtml(overview.dataSummary)}</p>
+      <div class="notes-list">${overview.notes.map((note) => `<span>${escapeHtml(note)}</span>`).join('')}</div>
     </div>
 
     <div class="score-grid">
@@ -140,6 +151,7 @@ async function handleAuth(mode) {
 
     currentToken = payload.token || '';
     localStorage.setItem('toxicity_token', currentToken);
+    sessionLabel.textContent = `${payload.user.username} · ${payload.user.role || 'user'}`;
     setAuthMessage(`${mode === 'register' ? 'Registered' : 'Logged in'} successfully for ${payload.user.username}.`);
     saveAssessmentBtn.classList.toggle('hidden', !currentToken);
     loadHistory();
@@ -166,15 +178,14 @@ async function loadHistory() {
     historyList.innerHTML = items
       .map((item) => `
         <div class="history-item">
-          <strong>${item.query}</strong>
+          <div class="history-topline"><strong>${escapeHtml(item.query)}</strong><span class="history-score">${item.scores.confidence || 0}</span></div>
           <div class="muted">${new Date(item.createdAt).toLocaleString()}</div>
-          <div>Confidence: ${item.scores.confidence || 0}/100</div>
-          <div>Status: ${item.overview?.status || 'Not available'}</div>
+          <div class="history-meta"><span>Confidence</span><span>${escapeHtml(item.overview?.status || 'Not available')}</span></div>
         </div>
       `)
       .join('');
   } catch (error) {
-    historyList.innerHTML = `<p class="muted">${error.message}</p>`;
+    historyList.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
   }
 }
 

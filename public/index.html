@@ -10,14 +10,22 @@
     <div class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Drug safety / screening</p>
+          <p class="eyebrow"><span class="live-dot"></span> Drug safety / screening</p>
           <h1>ToxiScreen Hub</h1>
+          <p class="topbar-copy">A practical evidence workspace for early compound triage.</p>
+        </div>
+        <div class="topbar-meta">
+          <span class="status-pill"><span class="status-dot"></span> Public sources online</span>
+          <span id="session-label" class="session-label">Guest session</span>
         </div>
       </header>
 
       <main class="layout">
         <section class="panel auth-panel">
-          <h2>Account access</h2>
+          <div class="panel-heading">
+            <div><p class="section-kicker">Workspace</p><h2>Account access</h2></div>
+            <span class="panel-icon">01</span>
+          </div>
           <div class="auth-form">
             <label for="username">Username</label>
             <input id="username" type="text" placeholder="demo_user" />
@@ -35,7 +43,11 @@
         </section>
 
         <section class="panel search-panel">
-          <h2>Run a screening check</h2>
+          <div class="panel-heading">
+            <div><p class="section-kicker">Start here</p><h2>Run a screening check</h2></div>
+            <span class="panel-icon accent-icon">02</span>
+          </div>
+          <p class="panel-intro">Cross-reference a compound against public chemistry and toxicology databases.</p>
           <form id="screening-form">
             <label for="query">Compound name or SMILES</label>
             <input
@@ -46,11 +58,11 @@
               placeholder="e.g. aspirin, caffeine, Cc1ccc(CC(C)C)cc1"
               required
             />
-            <button type="submit">Assess compound</button>
+            <button type="submit"><span>Assess compound</span><span aria-hidden="true">&#8594;</span></button>
           </form>
 
           <div class="source-list">
-            <h3>Connected public sources</h3>
+            <h3><span class="source-status"></span> Connected public sources</h3>
             <ul>
               <li>PubChem</li>
               <li>ChEMBL</li>
@@ -60,8 +72,11 @@
         </section>
 
         <section class="panel results-panel">
-          <h2>Assessment results</h2>
-          <div id="loader" class="loader hidden">Running queries...</div>
+          <div class="panel-heading">
+            <div><p class="section-kicker">Evidence review</p><h2>Assessment results</h2></div>
+            <span class="panel-icon accent-icon">03</span>
+          </div>
+          <div id="loader" class="loader hidden"><span class="spinner"></span> Querying public sources...</div>
           <div id="results" class="results-empty">
             <p>Enter a compound to retrieve screening data from public online databases.</p>
           </div>
@@ -71,7 +86,10 @@
         </section>
 
         <section class="panel history-panel">
-          <h2>Saved history</h2>
+          <div class="panel-heading">
+            <div><p class="section-kicker">Your workspace</p><h2>Saved history</h2></div>
+            <span class="panel-icon">04</span>
+          </div>
           <div id="history-list" class="history-list">
             <p class="muted">Login to view your saved assessments.</p>
           </div>
