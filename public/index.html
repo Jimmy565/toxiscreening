@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToxiScreen</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Drug safety / screening</p>
+          <h1>ToxiScreen Hub</h1>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel search-panel">
+          <h2>Run a screening check</h2>
+          <form id="screening-form">
+            <label for="query">Compound name or SMILES</label>
+            <input
+              id="query"
+              name="query"
+              type="text"
+              value="aspirin"
+              placeholder="e.g. aspirin, caffeine, Cc1ccc(CC(C)C)cc1"
+              required
+            />
+            <button type="submit">Assess compound</button>
+          </form>
+
+          <div class="source-list">
+            <h3>Connected public sources</h3>
+            <ul>
+              <li>PubChem</li>
+              <li>ChEMBL</li>
+              <li>EPA CompTox</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel results-panel">
+          <h2>Assessment results</h2>
+          <div id="loader" class="loader hidden">Running queries...</div>
+          <div id="results" class="results-empty">
+            <p>Enter a compound to retrieve screening data from public online databases.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "toxiscreen-hub",
+  "version": "1.0.0",
+  "description": "Toxicity screening prototype using public online chemistry databases.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "toxicity",
+    "chemistry",
+    "qsar",
+    "screening"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
