@@ -8,6 +8,16 @@ const PORT = Number(process.env.PORT) || 3000;
 const dbPath = path.join(__dirname, 'toxicity_app.db');
 const db = new DatabaseSync(dbPath);
 
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+const hashPassword = (password) => crypto.createHash('sha256').update(String(password)).digest('hex');
+
+const createToken = (username) => crypto
+  .createHash('sha256')
+  .update(`${Date.now()}-${username}-${Math.random()}`)
+  .digest('hex');
+
 const initDb = () => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -15,6 +25,7 @@ const initDb = () => {
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       token TEXT UNIQUE,
+      role TEXT NOT NULL DEFAULT 'user',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -31,15 +42,28 @@ const initDb = () => {
     );
   `);
 
-  const columns = db.prepare('PRAGMA table_info(assessments)').all();
-  const columnNames = new Set(columns.map((column) => column.name));
+  const columns = db.prepare('PRAGMA table_info(users)').all();
+  const userColumnNames = new Set(columns.map((column) => column.name));
 
-  if (!columnNames.has('status')) {
+  if (!userColumnNames.has('role')) {
+    db.exec('ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT "user"');
+  }
+
+  const assessmentColumns = db.prepare('PRAGMA table_info(assessments)').all();
+  const assessmentColumnNames = new Set(assessmentColumns.map((column) => column.name));
+
+  if (!assessmentColumnNames.has('status')) {
     db.exec('ALTER TABLE assessments ADD COLUMN status TEXT NOT NULL DEFAULT "pending"');
   }
 
-  if (!columnNames.has('reviewer_note')) {
+  if (!assessmentColumnNames.has('reviewer_note')) {
     db.exec('ALTER TABLE assessments ADD COLUMN reviewer_note TEXT NOT NULL DEFAULT ""');
+  }
+
+  const existingAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get(ADMIN_USERNAME);
+  if (!existingAdmin) {
+    db.prepare('INSERT INTO users (username, password_hash, token, role, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(ADMIN_USERNAME, hashPassword(ADMIN_PASSWORD), createToken(ADMIN_USERNAME), 'admin', new Date().toISOString());
   }
 };
 
@@ -103,13 +127,6 @@ const fetchJson = async (url, options = {}) => {
 
 const cleanQuery = (value = '') => String(value).trim();
 
-const hashPassword = (password) => crypto.createHash('sha256').update(String(password)).digest('hex');
-
-const createToken = (username) => crypto
-  .createHash('sha256')
-  .update(`${Date.now()}-${username}-${Math.random()}`)
-  .digest('hex');
-
 const getTokenFromRequest = (req) => {
   const bodyToken = req.body?.token || req.query?.token;
   const headerToken = req.headers.authorization || req.headers.Authorization;
@@ -132,6 +149,8 @@ const getUserByToken = (token) => {
 
   return db.prepare('SELECT * FROM users WHERE token = ?').get(String(token));
 };
+
+const userIsAdmin = (user) => user && user.role === 'admin';
 
 const normalizeSource = (sourceName, details) => ({
   source: sourceName,
@@ -267,6 +286,67 @@ function buildExpertSummary(query, sources, scores) {
 
 app.get('/api/data-sources', (_req, res) => {
   res.json({ dataSources });
+});
+
+app.get('/api/admin/assessments', (req, res) => {
+  const token = getTokenFromRequest(req);
+  const user = getUserByToken(token);
+
+  if (!user || !userIsAdmin(user)) {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const rows = db.prepare('SELECT a.*, u.username FROM assessments a JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC').all();
+
+  return res.json({
+    assessments: rows.map((row) => ({
+      id: row.id,
+      query: row.query,
+      username: row.username,
+      scores: JSON.parse(row.scores),
+      overview: JSON.parse(row.overview),
+      status: row.status || 'pending',
+      reviewerNote: row.reviewer_note || '',
+      createdAt: row.created_at,
+    })),
+  });
+});
+
+app.get('/api/admin/export/csv', (req, res) => {
+  const token = getTokenFromRequest(req);
+  const user = getUserByToken(token);
+
+  if (!user || !userIsAdmin(user)) {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const rows = db.prepare('SELECT a.*, u.username FROM assessments a JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC').all();
+
+  const csvRows = [
+    ['id', 'username', 'query', 'status', 'confidence', 'toxicity', 'mutagenicity', 'adme', 'reviewer_note'],
+    ...rows.map((row) => {
+      const scores = JSON.parse(row.scores || '{}');
+      return [
+        row.id,
+        row.username,
+        row.query,
+        row.status || 'pending',
+        scores.confidence || '',
+        scores.toxicity || '',
+        scores.mutagenicity || '',
+        scores.adme || '',
+        row.reviewer_note || '',
+      ];
+    }),
+  ];
+
+  const csv = csvRows
+    .map((line) => line.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="toxicity-assessments.csv"');
+  return res.send(csv);
 });
 
 app.post('/api/register', (req, res) => {

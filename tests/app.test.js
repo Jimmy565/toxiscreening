@@ -102,3 +102,14 @@ test('review endpoint updates an assessment status and note', async () => {
   assert.equal(reviewPayload.assessment.status, 'approved');
   assert.match(reviewPayload.assessment.reviewerNote, /manual review/);
 });
+
+test('admin can list all assessments and export csv', async () => {
+  const adminLogin = await request('/api/login', { username: 'admin', password: 'admin123' });
+  const adminToken = JSON.parse(adminLogin.body).token;
+
+  await request('/api/admin/assessments?token=' + encodeURIComponent(adminToken));
+  const exportResponse = await request(`/api/admin/export/csv?token=${encodeURIComponent(adminToken)}`);
+
+  assert.equal(exportResponse.status, 200);
+  assert.match(exportResponse.body, /query/i);
+});
