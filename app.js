@@ -5,11 +5,15 @@ const { DatabaseSync } = require('node:sqlite');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const dbPath = path.join(__dirname, 'toxicity_app.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'toxicity_app.db');
 const db = new DatabaseSync(dbPath);
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PASSWORD || ADMIN_PASSWORD === 'admin123')) {
+  throw new Error('Set a unique ADMIN_PASSWORD before starting in production.');
+}
 
 const hashPassword = (password) => crypto.createHash('sha256').update(String(password)).digest('hex');
 
@@ -106,6 +110,12 @@ const alertTerms = {
 };
 
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 const fetchJson = async (url, options = {}) => {
@@ -374,6 +384,7 @@ app.post('/api/register', (req, res) => {
     user: {
       id: result.lastInsertRowid,
       username,
+      role: 'user',
     },
     token,
   });
@@ -396,6 +407,7 @@ app.post('/api/login', (req, res) => {
     user: {
       id: user.id,
       username: user.username,
+      role: user.role || 'user',
     },
     token: user.token,
   });

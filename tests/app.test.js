@@ -22,7 +22,7 @@ const request = async (path, payload) => {
         res.on('data', (chunk) => {
           data += chunk;
         });
-        res.on('end', () => resolve({ status: res.statusCode, body: data }));
+        res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: data }));
       });
 
       req.on('error', reject);
@@ -42,6 +42,12 @@ test('health endpoint responds successfully', async () => {
   const response = await request('/api/health');
   assert.equal(response.status, 200);
   assert.match(response.body, /"ok":true/);
+});
+
+test('health endpoint includes baseline security headers', async () => {
+  const response = await request('/api/health');
+  assert.equal(response.headers['x-content-type-options'], 'nosniff');
+  assert.equal(response.headers['x-frame-options'], 'DENY');
 });
 
 test('predict endpoint rejects empty search input', async () => {
