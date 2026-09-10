@@ -16,6 +16,24 @@
       </header>
 
       <main class="layout">
+        <section class="panel auth-panel">
+          <h2>Account access</h2>
+          <div class="auth-form">
+            <label for="username">Username</label>
+            <input id="username" type="text" placeholder="demo_user" />
+
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" />
+
+            <div class="auth-actions">
+              <button type="button" id="register-btn">Register</button>
+              <button type="button" id="login-btn" class="secondary">Login</button>
+            </div>
+          </div>
+
+          <div id="auth-status" class="status-box hidden"></div>
+        </section>
+
         <section class="panel search-panel">
           <h2>Run a screening check</h2>
           <form id="screening-form">
@@ -46,6 +64,16 @@
           <div id="loader" class="loader hidden">Running queries...</div>
           <div id="results" class="results-empty">
             <p>Enter a compound to retrieve screening data from public online databases.</p>
+          </div>
+          <div class="save-actions">
+            <button type="button" id="save-assessment-btn" class="secondary hidden">Save assessment</button>
+          </div>
+        </section>
+
+        <section class="panel history-panel">
+          <h2>Saved history</h2>
+          <div id="history-list" class="history-list">
+            <p class="muted">Login to view your saved assessments.</p>
           </div>
         </section>
       </main>

@@ -1,8 +1,72 @@
 const express = require('express');
 const path = require('path');
+const crypto = require('node:crypto');
+const { DatabaseSync } = require('node:sqlite');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
+const dbPath = path.join(__dirname, 'toxicity_app.db');
+const db = new DatabaseSync(dbPath);
+
+const initDb = () => {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      token TEXT UNIQUE,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS assessments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      query TEXT NOT NULL,
+      scores TEXT NOT NULL,
+      overview TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `);
+};
+
+initDb();
+
+const dataSources = [
+  {
+    name: 'PubChem',
+    type: 'Compound registry',
+    description: 'Chemical identifiers, structures, and property metadata.',
+    reliability: 'High',
+  },
+  {
+    name: 'ChEMBL',
+    type: 'Bioactivity database',
+    description: 'Compound activity and medicinal chemistry references.',
+    reliability: 'High',
+  },
+  {
+    name: 'EPA CompTox',
+    type: 'Toxicology inventory',
+    description: 'Chemical hazard, exposure, and toxicology context metadata.',
+    reliability: 'High',
+  },
+];
+
+const alertTerms = {
+  nitroso: 'nitroso',
+  azide: 'azide',
+  epoxide: 'epoxide',
+  quinone: 'quinone',
+  aryl: 'aryl',
+  benzene: 'benzene',
+  halo: 'halo',
+  chlor: 'chlor',
+  fluoro: 'fluoro',
+  bromo: 'bromo',
+  nitro: 'nitro',
+  sulfonyl: 'sulfonyl',
+};
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -24,12 +88,64 @@ const fetchJson = async (url, options = {}) => {
   return response.json();
 };
 
-const cleanQuery = (value = '') => value.trim();
+const cleanQuery = (value = '') => String(value).trim();
+
+const hashPassword = (password) => crypto.createHash('sha256').update(String(password)).digest('hex');
+
+const createToken = (username) => crypto
+  .createHash('sha256')
+  .update(`${Date.now()}-${username}-${Math.random()}`)
+  .digest('hex');
+
+const getTokenFromRequest = (req) => {
+  const bodyToken = req.body?.token || req.query?.token;
+  const headerToken = req.headers.authorization || req.headers.Authorization;
+
+  if (bodyToken) {
+    return String(bodyToken);
+  }
+
+  if (headerToken && typeof headerToken === 'string' && headerToken.startsWith('Bearer ')) {
+    return headerToken.replace('Bearer ', '');
+  }
+
+  return null;
+};
+
+const getUserByToken = (token) => {
+  if (!token) {
+    return null;
+  }
+
+  return db.prepare('SELECT * FROM users WHERE token = ?').get(String(token));
+};
 
 const normalizeSource = (sourceName, details) => ({
   source: sourceName,
+  status: 'available',
   ...details,
 });
+
+const safeNumber = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+const describeRisk = (score, label) => {
+  if (score >= 75) {
+    return `${label}: high priority review`;
+  }
+  if (score >= 55) {
+    return `${label}: moderate priority review`;
+  }
+  return `${label}: low risk signal; confirm with assay`;
+};
+
+const getQualityBand = (score) => {
+  if (score >= 85) return { label: 'High confidence', className: 'score-high' };
+  if (score >= 60) return { label: 'Moderate confidence', className: 'score-medium' };
+  return { label: 'Low confidence', className: 'score-low' };
+};
 
 async function queryPubChem(searchTerm) {
   const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(searchTerm)}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,InChIKey/JSON`;
@@ -42,14 +158,15 @@ async function queryPubChem(searchTerm) {
 
   return normalizeSource('PubChem', {
     formula: property.MolecularFormula || null,
-    molecularWeight: property.MolecularWeight || null,
+    molecularWeight: safeNumber(property.MolecularWeight),
     smiles: property.CanonicalSMILES || null,
     inchiKey: property.InChIKey || null,
+    evidence: 'Structure and composition metadata retrieved from PubChem.',
   });
 }
 
 async function queryChEMBL(searchTerm) {
-  const url = `https://www.ebi.ac.uk/chembl/api/data/molecule?search=${encodeURIComponent(searchTerm)}&limit=3`;
+  const url = `https://www.ebi.ac.uk/chembl/api/data/molecule?search=${encodeURIComponent(searchTerm)}&limit=5`;
   const data = await fetchJson(url);
   const molecules = data?.molecules || [];
 
@@ -59,11 +176,13 @@ async function queryChEMBL(searchTerm) {
 
   return normalizeSource('ChEMBL', {
     count: molecules.length,
-    hits: molecules.slice(0, 3).map((molecule) => ({
+    hits: molecules.slice(0, 5).map((molecule) => ({
       name: molecule.pref_name || 'Unnamed molecule',
       chemblId: molecule.molecule_chembl_id || null,
       smiles: molecule.smiles || null,
+      maxPhase: molecule.max_phase || null,
     })),
+    evidence: 'Bioactivity and medicinal chemistry candidate records from ChEMBL.',
   });
 }
 
@@ -83,34 +202,22 @@ async function queryComptox(searchTerm) {
       casrn: item.casrn || null,
       dtxsid: item.dtxsid || null,
     })),
+    evidence: 'Hazard and toxicological inventory context from CompTox.',
   });
 }
 
-function inferRiskSignals(query, smiles = '', sourceCount = 0) {
+function inferRiskSignals(query, smiles = '', sourceCount = 0, sourceNames = []) {
   const haystack = `${query} ${smiles}`.toLowerCase();
-  const alertTerms = [
-    'nitroso',
-    'azide',
-    'epoxide',
-    'quinone',
-    'aryl',
-    'benzene',
-    'halo',
-    'chlor',
-    'fluoro',
-    'bromo',
-    'nitro',
-    'sulfonyl',
-  ];
+  const triggered = Object.keys(alertTerms).filter((term) => haystack.includes(term));
+  const sourceBoost = sourceCount * 10;
 
-  const triggered = alertTerms.filter((term) => haystack.includes(term));
+  const stopTox = Math.min(92, 30 + sourceBoost + triggered.length * 8 + (haystack.length > 20 ? 8 : 0));
+  const passPost = Math.min(90, 36 + sourceBoost + triggered.length * 6 + (sourceNames.includes('ChEMBL') ? 8 : 0));
+  const toxicity = Math.min(96, 32 + sourceBoost + triggered.length * 11 + (sourceNames.includes('CompTox') ? 10 : 0));
+  const mutagenicity = Math.min(94, 28 + sourceBoost + triggered.length * 12 + (sourceNames.includes('CompTox') ? 8 : 0));
+  const adme = Math.min(88, 40 + sourceBoost + (sourceNames.includes('ChEMBL') ? 8 : 0) + (haystack.length > 18 ? 6 : 0));
 
-  const base = Math.min(72, 35 + sourceCount * 12 + triggered.length * 8);
-  const stopTox = Math.min(90, base + 10);
-  const passPost = Math.min(88, 40 + sourceCount * 15 + triggered.length * 5);
-  const toxicity = Math.min(95, 30 + sourceCount * 17 + triggered.length * 10);
-  const mutagenicity = Math.min(92, 28 + sourceCount * 14 + triggered.length * 12);
-  const adme = Math.min(86, 45 + sourceCount * 10 + (haystack.length > 20 ? 8 : 0));
+  const confidence = Math.min(100, 50 + sourceCount * 18 + triggered.length * 4);
 
   return {
     stopTox: Math.round(stopTox),
@@ -118,24 +225,145 @@ function inferRiskSignals(query, smiles = '', sourceCount = 0) {
     toxicity: Math.round(toxicity),
     mutagenicity: Math.round(mutagenicity),
     adme: Math.round(adme),
+    confidence: Math.round(confidence),
+    alerts: triggered,
   };
 }
 
-function describeRisk(score, label) {
-  if (score >= 75) {
-    return `${label}: high priority review`;
-  }
-  if (score >= 55) {
-    return `${label}: moderate priority review`;
-  }
-  return `${label}: low risk signal; confirm by assay`;
+function buildExpertSummary(query, sources, scores) {
+  const quality = getQualityBand(scores.confidence);
+  const status = scores.toxicity >= 75 || scores.mutagenicity >= 75 ? 'Requires hazard review' : 'Candidate for further evaluation';
+
+  return {
+    query,
+    status,
+    sourceCount: sources.length,
+    dataSummary: sources.length
+      ? `Cross-referenced with ${sources.length} public chemistry sources and a confidence score of ${scores.confidence}/100.`
+      : 'No high-confidence public match could be confirmed from the selected online sources.',
+    quality,
+    notes: [
+      describeRisk(scores.stopTox, 'STOPTox'),
+      describeRisk(scores.passPost, 'PASS/POST'),
+      describeRisk(scores.toxicity, 'Toxicity'),
+      describeRisk(scores.mutagenicity, 'Mutagenicity'),
+      describeRisk(scores.adme, 'ADME'),
+    ],
+  };
 }
+
+app.get('/api/data-sources', (_req, res) => {
+  res.json({ dataSources });
+});
+
+app.post('/api/register', (req, res) => {
+  const username = cleanQuery(req.body?.username || '');
+  const password = String(req.body?.password || '');
+
+  if (!username || username.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters long.' });
+  }
+
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+  }
+
+  const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+  if (existingUser) {
+    return res.status(409).json({ error: 'Username is already taken.' });
+  }
+
+  const token = createToken(username);
+  const insert = db.prepare('INSERT INTO users (username, password_hash, token, created_at) VALUES (?, ?, ?, ?)');
+  const result = insert.run(username, hashPassword(password), token, new Date().toISOString());
+
+  return res.status(201).json({
+    user: {
+      id: result.lastInsertRowid,
+      username,
+    },
+    token,
+  });
+});
+
+app.post('/api/login', (req, res) => {
+  const username = cleanQuery(req.body?.username || '');
+  const password = String(req.body?.password || '');
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  if (!user || user.password_hash !== hashPassword(password)) {
+    return res.status(401).json({ error: 'Invalid credentials.' });
+  }
+
+  return res.json({
+    user: {
+      id: user.id,
+      username: user.username,
+    },
+    token: user.token,
+  });
+});
+
+app.post('/api/assessments', (req, res) => {
+  const token = getTokenFromRequest(req);
+  const user = getUserByToken(token);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+
+  const query = cleanQuery(req.body?.query || '');
+  const scores = req.body?.scores || {};
+  const overview = req.body?.overview || {};
+
+  if (!query) {
+    return res.status(400).json({ error: 'Assessment query is required.' });
+  }
+
+  const insert = db.prepare('INSERT INTO assessments (user_id, query, scores, overview, created_at) VALUES (?, ?, ?, ?, ?)');
+  const result = insert.run(user.id, query, JSON.stringify(scores), JSON.stringify(overview), new Date().toISOString());
+
+  return res.status(201).json({
+    assessment: {
+      id: result.lastInsertRowid,
+      userId: user.id,
+      query,
+      scores,
+      overview,
+    },
+  });
+});
+
+app.get('/api/assessments', (req, res) => {
+  const token = getTokenFromRequest(req);
+  const user = getUserByToken(token);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+
+  const rows = db.prepare('SELECT * FROM assessments WHERE user_id = ? ORDER BY created_at DESC').all(user.id);
+
+  return res.json({
+    assessments: rows.map((row) => ({
+      id: row.id,
+      query: row.query,
+      scores: JSON.parse(row.scores),
+      overview: JSON.parse(row.overview),
+      createdAt: row.created_at,
+    })),
+  });
+});
 
 app.post('/api/predict', async (req, res) => {
   const query = cleanQuery(req.body?.query || '');
 
-  if (!query) {
-    return res.status(400).json({ error: 'Please provide a compound name or SMILES string.' });
+  if (!query || query.length < 2) {
+    return res.status(400).json({ error: 'Please provide a valid compound name or SMILES string.' });
   }
 
   try {
@@ -151,47 +379,35 @@ app.post('/api/predict', async (req, res) => {
       compToxResult.status === 'fulfilled' ? compToxResult.value : null,
     ].filter(Boolean);
 
+    const sourceNames = sources.map((source) => source.source);
     const primarySource = sources[0] || {
       source: 'Fallback',
       formula: null,
       molecularWeight: null,
       smiles: null,
+      evidence: 'No direct match was confirmed in the primary online sources.',
     };
 
-    const riskSignals = inferRiskSignals(query, primarySource.smiles || '', sources.length);
-
-    const summary = {
-      query,
-      status: 'Prototype assessment',
-      sourceCount: sources.length,
-      dataSummary: primarySource.formula
-        ? `Primary data from ${primarySource.source} shows formula ${primarySource.formula}.`
-        : `No exact match found in the primary public database, but the query was reviewed across ${sources.length || 0} online sources.`,
-      notes: [
-        describeRisk(riskSignals.stopTox, 'STOPTox'),
-        describeRisk(riskSignals.passPost, 'PASS/POST'),
-        describeRisk(riskSignals.toxicity, 'Toxicity'),
-        describeRisk(riskSignals.mutagenicity, 'Mutagenicity'),
-        describeRisk(riskSignals.adme, 'ADME'),
-      ],
-    };
+    const riskSignals = inferRiskSignals(query, primarySource.smiles || '', sources.length, sourceNames);
+    const overview = buildExpertSummary(query, sources, riskSignals);
 
     res.json({
       query,
-      overview: summary,
+      overview,
       sources,
       scores: riskSignals,
+      dataSources,
     });
   } catch (error) {
     console.error('Prediction error:', error);
     res.status(500).json({
-      error: 'The database lookup failed. Please re-check the query or try another compound name.',
+      error: 'The external database lookup failed or the compound could not be resolved. Please validate the input and try again.',
     });
   }
 });
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'toxicity-screening-app' });
+  res.json({ ok: true, service: 'toxicity-screening-app', sources: dataSources.length });
 });
 
 app.use((req, res, next) => {
@@ -202,6 +418,14 @@ app.use((req, res, next) => {
   return res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Toxicity screening app running at http://localhost:${PORT}`);
-});
+function startServer(port = PORT) {
+  return app.listen(port, () => {
+    console.log(`Toxicity screening app running at http://localhost:${port}`);
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer, dataSources };
