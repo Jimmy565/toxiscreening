@@ -77,3 +77,28 @@ test('assessment history endpoint returns saved entries for the user', async () 
   assert.ok(Array.isArray(history.assessments));
   assert.ok(history.assessments.length >= 1);
 });
+
+test('review endpoint updates an assessment status and note', async () => {
+  const username = `review_user_${Date.now()}`;
+  const registerResponse = await request('/api/register', { username, password: 'demo123' });
+  const token = JSON.parse(registerResponse.body).token;
+
+  const created = await request('/api/assessments', {
+    token,
+    query: 'benzene',
+    scores: { stopTox: 80, passPost: 60, toxicity: 90, mutagenicity: 88, adme: 70, confidence: 82 },
+    overview: { status: 'Requires hazard review' }
+  });
+
+  const assessmentId = JSON.parse(created.body).assessment.id;
+  const reviewResponse = await request(`/api/assessments/${assessmentId}/review`, {
+    token,
+    status: 'approved',
+    reviewerNote: 'Accepted after manual review.'
+  });
+
+  assert.equal(reviewResponse.status, 200);
+  const reviewPayload = JSON.parse(reviewResponse.body);
+  assert.equal(reviewPayload.assessment.status, 'approved');
+  assert.match(reviewPayload.assessment.reviewerNote, /manual review/);
+});

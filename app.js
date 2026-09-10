@@ -24,10 +24,23 @@ const initDb = () => {
       query TEXT NOT NULL,
       scores TEXT NOT NULL,
       overview TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      reviewer_note TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
   `);
+
+  const columns = db.prepare('PRAGMA table_info(assessments)').all();
+  const columnNames = new Set(columns.map((column) => column.name));
+
+  if (!columnNames.has('status')) {
+    db.exec('ALTER TABLE assessments ADD COLUMN status TEXT NOT NULL DEFAULT "pending"');
+  }
+
+  if (!columnNames.has('reviewer_note')) {
+    db.exec('ALTER TABLE assessments ADD COLUMN reviewer_note TEXT NOT NULL DEFAULT ""');
+  }
 };
 
 initDb();
@@ -324,8 +337,8 @@ app.post('/api/assessments', (req, res) => {
     return res.status(400).json({ error: 'Assessment query is required.' });
   }
 
-  const insert = db.prepare('INSERT INTO assessments (user_id, query, scores, overview, created_at) VALUES (?, ?, ?, ?, ?)');
-  const result = insert.run(user.id, query, JSON.stringify(scores), JSON.stringify(overview), new Date().toISOString());
+  const insert = db.prepare('INSERT INTO assessments (user_id, query, scores, overview, status, reviewer_note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  const result = insert.run(user.id, query, JSON.stringify(scores), JSON.stringify(overview), 'pending', '', new Date().toISOString());
 
   return res.status(201).json({
     assessment: {
@@ -334,6 +347,8 @@ app.post('/api/assessments', (req, res) => {
       query,
       scores,
       overview,
+      status: 'pending',
+      reviewerNote: '',
     },
   });
 });
@@ -354,8 +369,50 @@ app.get('/api/assessments', (req, res) => {
       query: row.query,
       scores: JSON.parse(row.scores),
       overview: JSON.parse(row.overview),
+      status: row.status || 'pending',
+      reviewerNote: row.reviewer_note || '',
       createdAt: row.created_at,
     })),
+  });
+});
+
+app.post('/api/assessments/:id/review', (req, res) => {
+  const token = getTokenFromRequest(req);
+  const user = getUserByToken(token);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+
+  const assessmentId = Number(req.params?.id);
+  if (!Number.isInteger(assessmentId)) {
+    return res.status(400).json({ error: 'A valid assessment ID is required.' });
+  }
+
+  const status = String(req.body?.status || '').toLowerCase();
+  const reviewerNote = String(req.body?.reviewerNote || '');
+
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'Status must be one of: pending, approved, rejected.' });
+  }
+
+  const assessment = db.prepare('SELECT * FROM assessments WHERE id = ? AND user_id = ?').get(assessmentId, user.id);
+  if (!assessment) {
+    return res.status(404).json({ error: 'Assessment not found.' });
+  }
+
+  const updated = db.prepare('UPDATE assessments SET status = ?, reviewer_note = ? WHERE id = ? AND user_id = ?');
+  updated.run(status, reviewerNote, assessmentId, user.id);
+
+  return res.json({
+    assessment: {
+      id: assessment.id,
+      query: assessment.query,
+      status,
+      reviewerNote,
+      scores: JSON.parse(assessment.scores),
+      overview: JSON.parse(assessment.overview),
+    },
   });
 });
 
