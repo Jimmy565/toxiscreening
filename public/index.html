@@ -26,6 +26,8 @@
         <div class="step-item" data-step-indicator="2"><span>02</span><strong>Compound</strong></div>
         <div class="step-line"></div>
         <div class="step-item" data-step-indicator="3"><span>03</span><strong>Results</strong></div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step-indicator="4"><span>04</span><strong>Review</strong></div>
       </nav>
 
       <main class="layout wizard-layout">
@@ -35,36 +37,36 @@
             <div><p class="section-kicker">Workspace</p><h2>Account access</h2></div>
             <span class="panel-icon">01</span>
           </div>
-          <div class="auth-form">
-            <label for="username">Username</label>
-            <input id="username" type="text" placeholder="demo_user" />
-
-            <label for="password">Password</label>
-            <input id="password" type="password" placeholder="••••••••" />
-
-            <div class="auth-actions">
-              <button type="button" id="register-btn">Register</button>
-              <button type="button" id="login-btn" class="secondary">Login</button>
-            </div>
+          <div class="save-actions">
+            <button type="button" id="continue-review-btn">Continue to review <span aria-hidden="true">&#8594;</span></button>
           </div>
 
-          <div id="auth-status" class="status-box hidden"></div>
-          </section>
         </section>
 
-        <section class="wizard-step" data-step="2">
-          <section class="panel search-panel">
-          <div class="panel-heading">
-            <div><p class="section-kicker">Start here</p><h2>Run a screening check</h2></div>
-            <span class="panel-icon accent-icon">02</span>
-          </div>
-          <p class="panel-intro">Cross-reference a compound against public chemistry and toxicology databases.</p>
-          <form id="screening-form">
-            <label for="query">Compound name or SMILES</label>
-            <input
-              id="query"
-              name="query"
-              type="text"
+        <section class="wizard-step" data-step="4">
+          <section class="panel review-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Final step</p><h2>Review and save</h2></div>
+              <span class="panel-icon accent-icon">04</span>
+            </div>
+            <p class="panel-intro">Check the screening snapshot before adding it to your saved assessment history.</p>
+            <div id="review-summary" class="review-summary"></div>
+            <div class="save-actions">
+              <button type="button" id="save-assessment-btn" class="hidden">Save assessment</button>
+              <button type="button" id="back-to-results" class="secondary">Back to results</button>
+            </div>
+            <div id="save-status" class="status-box hidden"></div>
+          </section>
+          <section class="panel history-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Your workspace</p><h2>Saved history</h2></div>
+              <span class="panel-icon">05</span>
+            </div>
+            <div id="history-list" class="history-list">
+              <p class="muted">Login to view your saved assessments.</p>
+            </div>
+          </section>
+            <label for="password">Password</label>
               value="aspirin"
               placeholder="e.g. aspirin, caffeine, Cc1ccc(CC(C)C)cc1"
               required

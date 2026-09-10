@@ -9,10 +9,14 @@ const loginBtn = document.getElementById('login-btn');
 const saveAssessmentBtn = document.getElementById('save-assessment-btn');
 const historyList = document.getElementById('history-list');
 const sessionLabel = document.getElementById('session-label');
+const reviewSummary = document.getElementById('review-summary');
+const saveStatus = document.getElementById('save-status');
 const wizardSteps = [...document.querySelectorAll('[data-step]')];
 const stepIndicators = [...document.querySelectorAll('[data-step-indicator]')];
 const backToAccountBtn = document.getElementById('back-to-account');
 const newAssessmentBtn = document.getElementById('new-assessment-btn');
+const continueReviewBtn = document.getElementById('continue-review-btn');
+const backToResultsBtn = document.getElementById('back-to-results');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
@@ -131,6 +135,20 @@ function renderResult(payload) {
   saveAssessmentBtn.classList.toggle('hidden', !currentToken);
 }
 
+function prepareReview() {
+  if (!latestResult) return;
+
+  const { overview, scores } = latestResult;
+  reviewSummary.innerHTML = `
+    <div class="review-summary-row"><span>Compound</span><strong>${escapeHtml(overview.query)}</strong></div>
+    <div class="review-summary-row"><span>Screening status</span><strong>${escapeHtml(overview.status)}</strong></div>
+    <div class="review-summary-row"><span>Confidence</span><strong>${scores.confidence}/100</strong></div>
+    <div class="review-summary-row"><span>Evidence</span><strong>${overview.sourceCount} public sources</strong></div>
+  `;
+  saveStatus.classList.add('hidden');
+  saveAssessmentBtn.classList.toggle('hidden', !currentToken);
+}
+
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
     ...options,
@@ -206,7 +224,8 @@ async function loadHistory() {
 
 async function saveAssessment() {
   if (!currentToken || !latestResult) {
-    setAuthMessage('Login first and run an assessment before saving.', true);
+    saveStatus.textContent = 'Login first and run an assessment before saving.';
+    saveStatus.classList.remove('hidden');
     return;
   }
 
@@ -221,10 +240,13 @@ async function saveAssessment() {
       }),
     });
 
-    setAuthMessage(`Assessment saved: ${payload.assessment.query}`);
+    saveStatus.textContent = `Assessment saved: ${payload.assessment.query}`;
+    saveStatus.classList.remove('hidden');
     loadHistory();
   } catch (error) {
-    setAuthMessage(error.message, true);
+    saveStatus.textContent = error.message;
+    saveStatus.classList.remove('hidden');
+    saveStatus.style.borderColor = 'rgba(255, 107, 107, 0.5)';
   }
 }
 
@@ -273,6 +295,11 @@ form.addEventListener('submit', async (event) => {
 registerBtn.addEventListener('click', () => handleAuth('register'));
 loginBtn.addEventListener('click', () => handleAuth('login'));
 saveAssessmentBtn.addEventListener('click', saveAssessment);
+continueReviewBtn.addEventListener('click', () => {
+  prepareReview();
+  showStep(4);
+});
+backToResultsBtn.addEventListener('click', () => showStep(3));
 backToAccountBtn.addEventListener('click', () => showStep(1));
 newAssessmentBtn.addEventListener('click', () => {
   resultsBox.innerHTML = '<p>Enter a compound to retrieve screening data from public online databases.</p>';

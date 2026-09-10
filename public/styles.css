@@ -88,6 +88,9 @@ h1 {
 .step-panel { min-height: 360px; }
 .step-actions { display: flex; justify-content: flex-start; margin-top: 22px; }
 .step-actions button { width: auto; }
+.review-summary { margin-top: 24px; border-top: 1px solid var(--border); }
+.review-summary-row { display: flex; justify-content: space-between; gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
+.review-summary-row strong { color: var(--text); text-align: right; }
 .stepper { display: flex; align-items: center; max-width: 760px; margin: 0 auto 28px; }
 .step-item { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
 .step-item span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 50%; font: 700 0.68rem Arial, sans-serif; }
@@ -362,4 +365,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .stepper { margin-bottom: 20px; }
   .step-item strong { display: none; }
   .step-line { margin: 0 8px; }
+  .review-summary-row { display: grid; gap: 4px; }
+  .review-summary-row strong { text-align: left; }
 }
