@@ -23,13 +23,13 @@ A lightweight toxicity screening prototype that queries public online chemistry 
 
 ## Deploy with Render
 
-1. Create a new Render Blueprint from this repository, or create a Node Web Service using the settings below. The included Blueprint uses the Starter plan because SQLite persistence requires a persistent disk.
+1. Create a new Render Blueprint from this repository, or create a Node Web Service using the settings below. The included Blueprint uses Render's free plan.
 2. Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` to strong, unique values.
 3. Use `npm install` as the build command and `npm start` as the start command.
 4. Set the health check path to `/api/health`.
-5. Keep `DB_PATH=/var/data/toxicity_app.db` when using a persistent Render disk.
+5. Add a paid persistent disk later if you need user accounts and assessments to survive redeploys and restarts.
 
-The included `render.yaml` defines these settings. SQLite persistence requires a Render persistent disk; without one, data can be lost when the service is redeployed.
+The included `render.yaml` defines these settings. On the free plan, SQLite data is temporary and can be lost when the service is redeployed or restarted. Use the free deployment for testing and demonstrations until persistent storage is added.
 
 ## Notes
 
