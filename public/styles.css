@@ -93,6 +93,7 @@ h1 {
 .review-summary { margin-top: 24px; border-top: 1px solid var(--border); }
 .review-summary-row { display: flex; justify-content: space-between; gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
 .review-summary-row strong { color: var(--text); text-align: right; }
+.history-inline { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
 .stepper { display: flex; align-items: center; max-width: 760px; margin: 0 auto 28px; }
 .step-item { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
 .step-item span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 50%; font: 700 0.68rem Arial, sans-serif; }
