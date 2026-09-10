@@ -1,6 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ToxiScreen</title>
+    <link rel="stylesheet" href="styles.css?v=20260911" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow"><span class="live-dot"></span> Drug safety / screening</p>
+          <h1>ToxiScreen Hub</h1>
+          <p class="topbar-copy">A practical evidence workspace for early compound triage.</p>
+        </div>
+        <div class="topbar-meta">
+          <span class="status-pill"><span class="status-dot"></span> Public sources online</span>
+          <span id="session-label" class="session-label">Guest session</span>
+          <button type="button" id="account-btn" class="account-button">Change account</button>
+        </div>
+  </header>
+
+  <nav class="stepper" aria-label="Screening progress">
+  <div class="step-item active" data-step-indicator="1"><span>01</span><strong>Account</strong></div>
+  <div class="step-line"></div>
+  <div class="step-item" data-step-indicator="2"><span>02</span><strong>Compound</strong></div>
+  <div class="step-line"></div>
+  <div class="step-item" data-step-indicator="3"><span>03</span><strong>Results</strong></div>
+  <div class="step-line"></div>
+        <div class="step-item" data-step-indicator="4"><span>04</span><strong>Review</strong></div>
+      </nav>
+
+      <main class="wizard-layout">
+        <section class="wizard-step active" data-step="1">
+          <section class="panel auth-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Workspace</p><h2>Account access</h2></div>
+              <span class="panel-icon">01</span>
+            </div>
+            <div class="auth-form">
+              <label for="username">Username</label>
+              <input id="username" type="text" placeholder="demo_user" autocomplete="username" />
+              <label for="password">Password</label>
+              <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+              <div class="auth-actions">
+                <button type="button" id="register-btn">Register</button>
+                <button type="button" id="login-btn" class="secondary">Login</button>
+              </div>
+            </div>
+            <div id="auth-status" class="status-box hidden"></div>
+          </section>
+  </section>
+
+  <section class="wizard-step" data-step="2">
+          <section class="panel search-panel featured-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Start here</p><h2>Run a screening check</h2></div>
+              <span class="panel-icon accent-icon">02</span>
+            </div>
+            <p class="panel-intro">Cross-reference a compound against public chemistry and toxicology databases.</p>
+            <form id="screening-form">
+              <label for="query">Compound name or SMILES</label>
+              <input id="query" name="query" type="text" value="aspirin" placeholder="e.g. aspirin, caffeine, Cc1ccc(CC(C)C)cc1" required />
+              <button type="submit"><span>Assess compound</span><span aria-hidden="true">&#8594;</span></button>
+            </form>
+            <div class="source-list">
+              <h3><span class="source-status"></span> Connected public sources</h3>
+              <ul><li>PubChem</li><li>ChEMBL</li><li>EPA CompTox</li></ul>
+            </div>
+            <div class="step-actions"><button type="button" id="back-to-account" class="secondary">Back to account</button></div>
+          </section>
+        </section>
+
+        <section class="wizard-step" data-step="3">
+          <section class="panel results-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Evidence review</p><h2>Assessment results</h2></div>
+              <span class="panel-icon accent-icon">03</span>
+            </div>
+            <div id="loader" class="loader hidden"><span class="spinner"></span> Querying public sources...</div>
+            <div id="results" class="results-empty"><p>Enter a compound to retrieve screening data from public online databases.</p></div>
+            <div class="save-actions"><button type="button" id="continue-review-btn">Continue to review <span aria-hidden="true">&#8594;</span></button></div>
+            <div class="step-actions"><button type="button" id="new-assessment-btn" class="secondary">Run another assessment</button></div>
+          </section>
+        </section>
+
+        <section class="wizard-step" data-step="4">
+          <section class="panel review-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Final step</p><h2>Review and save</h2></div>
+              <span class="panel-icon accent-icon">04</span>
+            </div>
+            <p class="panel-intro">Check the screening snapshot before adding it to your saved assessment history.</p>
+            <div id="review-summary" class="review-summary"></div>
+            <div class="save-actions">
+              <button type="button" id="save-assessment-btn">Save assessment</button>
+              <button type="button" id="back-to-results" class="secondary">Back to results</button>
+            </div>
+            <div id="save-status" class="status-box hidden"></div>
+          </section>
+          <section class="panel history-panel step-panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker">Your workspace</p><h2>Saved history</h2></div>
+              <span class="panel-icon">05</span>
+            </div>
+            <div id="history-list" class="history-list"><p class="muted">Login to view your saved assessments.</p></div>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script src="app.js?v=20260911"></script>
+  </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToxiScreen</title>
