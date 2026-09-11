@@ -31,6 +31,12 @@ A lightweight toxicity screening prototype that queries public online chemistry 
 
 The included `render.yaml` defines these settings. On the free plan, SQLite data is temporary and can be lost when the service is redeployed or restarted. Use the free deployment for testing and demonstrations until persistent storage is added.
 
+## Install as an app
+
+The deployed website is also an installable Progressive Web App. Open the public HTTPS URL in a supported browser and choose the browser's **Install ToxiScreen** option. On browsers that support the install prompt, the app also shows an **Install app** button in the header.
+
+The installed app still needs an internet connection for public database lookups and server-side accounts. It uses the same URL and backend as the website.
+
 ## Notes
 
 This is a prototype for data aggregation and screening workflow demonstration. It is not a regulatory toxicology model or a substitute for validated QSAR or experimental testing. Do not use the default local admin credentials in a deployed environment.

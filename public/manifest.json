@@ -1,0 +1,17 @@
+{
+  "name": "ToxiScreen Hub",
+  "short_name": "ToxiScreen",
+  "description": "Compound screening workspace using public chemistry databases.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07111c",
+  "theme_color": "#07111c",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

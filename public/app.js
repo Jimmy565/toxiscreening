@@ -18,9 +18,22 @@ const newAssessmentBtn = document.getElementById('new-assessment-btn');
 const continueReviewBtn = document.getElementById('continue-review-btn');
 const backToResultsBtn = document.getElementById('back-to-results');
 const accountBtn = document.getElementById('account-btn');
+const installBtn = document.getElementById('install-btn');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
+let installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  installBtn.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  installBtn.classList.add('hidden');
+});
 
 function resetSession() {
   currentToken = '';
@@ -321,6 +334,17 @@ newAssessmentBtn.addEventListener('click', () => {
   showStep(2);
 });
 accountBtn.addEventListener('click', resetSession);
+installBtn.addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  installBtn.classList.add('hidden');
+});
 
 showStep(1);
 loadHistory();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+}

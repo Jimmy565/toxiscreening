@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToxiScreen</title>
     <link rel="stylesheet" href="styles.css?v=20260911" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#07111c" />
   </head>
   <body>
     <div class="app-shell">
@@ -17,6 +19,7 @@
         <div class="topbar-meta">
           <span class="status-pill"><span class="status-dot"></span> Public sources online</span>
           <span id="session-label" class="session-label">Guest session</span>
+          <button type="button" id="install-btn" class="account-button hidden">Install app</button>
           <button type="button" id="account-btn" class="account-button">Change account</button>
         </div>
       </header>
