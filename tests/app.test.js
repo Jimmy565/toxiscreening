@@ -56,6 +56,19 @@ test('predict endpoint rejects empty search input', async () => {
   assert.match(response.body, /Please provide a valid compound/);
 });
 
+test('feedback endpoint stores structured tester feedback', async () => {
+  const response = await request('/api/feedback', {
+    category: 'ux',
+    severity: 'medium',
+    compound: 'aspirin',
+    device: 'test browser',
+    expected: 'Results should be easy to read.',
+    actual: 'The result card is crowded.',
+  });
+  assert.equal(response.status, 201);
+  assert.match(response.body, /"category":"ux"/);
+});
+
 test('register endpoint creates a user account', async () => {
   const username = `demo_user_${Date.now()}`;
   const response = await request('/api/register', { username, password: 'demo123' });
@@ -114,8 +127,11 @@ test('admin can list all assessments and export csv', async () => {
   const adminToken = JSON.parse(adminLogin.body).token;
 
   await request('/api/admin/assessments?token=' + encodeURIComponent(adminToken));
+  const feedbackResponse = await request('/api/admin/feedback?token=' + encodeURIComponent(adminToken));
   const exportResponse = await request(`/api/admin/export/csv?token=${encodeURIComponent(adminToken)}`);
 
+  assert.equal(feedbackResponse.status, 200);
+  assert.match(feedbackResponse.body, /"feedback"/);
   assert.equal(exportResponse.status, 200);
   assert.match(exportResponse.body, /query/i);
 });

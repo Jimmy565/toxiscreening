@@ -19,6 +19,10 @@ const continueReviewBtn = document.getElementById('continue-review-btn');
 const backToResultsBtn = document.getElementById('back-to-results');
 const accountBtn = document.getElementById('account-btn');
 const installBtn = document.getElementById('install-btn');
+const feedbackBtn = document.getElementById('feedback-btn');
+const feedbackDialog = document.getElementById('feedback-dialog');
+const feedbackForm = document.getElementById('feedback-form');
+const feedbackStatus = document.getElementById('feedback-status');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
@@ -340,6 +344,24 @@ installBtn.addEventListener('click', async () => {
   await installPrompt.userChoice;
   installPrompt = null;
   installBtn.classList.add('hidden');
+});
+feedbackBtn.addEventListener('click', () => feedbackDialog.showModal());
+document.getElementById('close-feedback-btn').addEventListener('click', () => feedbackDialog.close());
+document.getElementById('cancel-feedback-btn').addEventListener('click', () => feedbackDialog.close());
+feedbackForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const feedback = Object.fromEntries(new FormData(feedbackForm).entries());
+  feedbackStatus.classList.add('hidden');
+
+  try {
+    await fetchJson('/api/feedback', { method: 'POST', body: JSON.stringify(feedback) });
+    feedbackForm.reset();
+    feedbackStatus.textContent = 'Thanks. Your feedback was submitted for review.';
+    feedbackStatus.classList.remove('hidden');
+  } catch (error) {
+    feedbackStatus.textContent = error.message;
+    feedbackStatus.classList.remove('hidden');
+  }
 });
 
 showStep(1);

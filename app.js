@@ -44,6 +44,19 @@ const initDb = () => {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      compound TEXT NOT NULL DEFAULT '',
+      device TEXT NOT NULL DEFAULT '',
+      expected TEXT NOT NULL,
+      actual TEXT NOT NULL,
+      details TEXT NOT NULL DEFAULT '',
+      contact TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   const columns = db.prepare('PRAGMA table_info(users)').all();
@@ -296,6 +309,56 @@ function buildExpertSummary(query, sources, scores) {
 
 app.get('/api/data-sources', (_req, res) => {
   res.json({ dataSources });
+});
+
+app.post('/api/feedback', (req, res) => {
+  const fields = ['category', 'severity', 'compound', 'device', 'expected', 'actual', 'details', 'contact'];
+  const feedback = Object.fromEntries(fields.map((field) => [field, cleanQuery(req.body?.[field] || '')]));
+
+  if (!['bug', 'ux', 'scientific', 'feature', 'other'].includes(feedback.category)) {
+    return res.status(400).json({ error: 'Choose a valid feedback category.' });
+  }
+
+  if (!['low', 'medium', 'high'].includes(feedback.severity)) {
+    return res.status(400).json({ error: 'Choose a valid feedback severity.' });
+  }
+
+  if (!feedback.expected || !feedback.actual) {
+    return res.status(400).json({ error: 'Expected and actual behavior are required.' });
+  }
+
+  if (fields.some((field) => feedback[field].length > 2000)) {
+    return res.status(400).json({ error: 'Feedback fields must be 2,000 characters or fewer.' });
+  }
+
+  const result = db.prepare(`
+    INSERT INTO feedback (category, severity, compound, device, expected, actual, details, contact, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    feedback.category,
+    feedback.severity,
+    feedback.compound,
+    feedback.device,
+    feedback.expected,
+    feedback.actual,
+    feedback.details,
+    feedback.contact,
+    new Date().toISOString(),
+  );
+
+  return res.status(201).json({ feedback: { id: result.lastInsertRowid, ...feedback } });
+});
+
+app.get('/api/admin/feedback', (req, res) => {
+  const token = getTokenFromRequest(req);
+  const user = getUserByToken(token);
+
+  if (!user || !userIsAdmin(user)) {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const rows = db.prepare('SELECT * FROM feedback ORDER BY created_at DESC').all();
+  return res.json({ feedback: rows });
 });
 
 app.get('/api/admin/assessments', (req, res) => {

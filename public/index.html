@@ -27,7 +27,7 @@
         <div class="topbar-meta">
           <span class="status-pill"><span class="status-dot"></span> Public sources online</span>
           <span id="session-label" class="session-label">Guest session</span>
-          <a class="account-button feedback-button" href="https://github.com/Jimmy565/toxiscreening/issues/new" target="_blank" rel="noreferrer">Give feedback</a>
+          <button type="button" id="feedback-btn" class="account-button feedback-button">Give feedback</button>
           <button type="button" id="install-btn" class="account-button hidden">Install app</button>
           <button type="button" id="account-btn" class="account-button">Change account</button>
         </div>
@@ -117,6 +117,36 @@
           </section>
         </section>
       </main>
+
+      <dialog id="feedback-dialog" class="feedback-dialog">
+        <form id="feedback-form" method="dialog">
+          <div class="panel-heading">
+            <div><p class="section-kicker">Help improve ToxiScreen</p><h2>Send feedback</h2></div>
+            <button type="button" id="close-feedback-btn" class="dialog-close" aria-label="Close feedback">&times;</button>
+          </div>
+          <p class="panel-intro">Please use non-sensitive example compounds only.</p>
+          <label for="feedback-category">Type</label>
+          <select id="feedback-category" name="category">
+            <option value="bug">Bug</option><option value="ux">Usability</option><option value="scientific">Scientific concern</option><option value="feature">Feature request</option><option value="other">Other</option>
+          </select>
+          <label for="feedback-severity">Severity</label>
+          <select id="feedback-severity" name="severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+          <label for="feedback-compound">Example compound, optional</label>
+          <input id="feedback-compound" name="compound" type="text" maxlength="2000" />
+          <label for="feedback-device">Browser/device, optional</label>
+          <input id="feedback-device" name="device" type="text" maxlength="2000" placeholder="Chrome on Android" />
+          <label for="feedback-expected">What did you expect?</label>
+          <textarea id="feedback-expected" name="expected" maxlength="2000" required></textarea>
+          <label for="feedback-actual">What happened?</label>
+          <textarea id="feedback-actual" name="actual" maxlength="2000" required></textarea>
+          <label for="feedback-details">Additional details, optional</label>
+          <textarea id="feedback-details" name="details" maxlength="2000"></textarea>
+          <label for="feedback-contact">Contact, optional</label>
+          <input id="feedback-contact" name="contact" type="text" maxlength="2000" placeholder="Email or LinkedIn profile" />
+          <div class="feedback-actions"><button type="submit">Submit feedback</button><button type="button" id="cancel-feedback-btn" class="secondary">Cancel</button></div>
+          <div id="feedback-status" class="status-box hidden"></div>
+        </form>
+      </dialog>
     </div>
     <script src="app.js?v=20260911"></script>
   </body>
