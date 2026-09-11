@@ -37,6 +37,10 @@ The deployed website is also an installable Progressive Web App. Open the public
 
 The installed app still needs an internet connection for public database lookups and server-side accounts. It uses the same URL and backend as the website.
 
+## Public testing
+
+For feedback, testers can open the [GitHub issue form](https://github.com/Jimmy565/toxiscreening/issues/new). Ask them to include the compound entered, the browser/device used, what they expected, what happened, and any screenshot that does not contain private data.
+
 ## Notes
 
 This is a prototype for data aggregation and screening workflow demonstration. It is not a regulatory toxicology model or a substitute for validated QSAR or experimental testing. Do not use the default local admin credentials in a deployed environment.

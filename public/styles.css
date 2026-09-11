@@ -71,6 +71,7 @@ body {
 .status-dot { margin-right: 6px; width: 6px; height: 6px; }
 .session-label { color: var(--muted); }
 .account-button { padding: 7px 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); font: 600 0.72rem Arial, sans-serif; }
+.feedback-button { text-decoration: none; }
 .account-button:hover { color: var(--text); border-color: var(--accent); }
 
 h1 {
