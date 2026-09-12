@@ -178,6 +178,55 @@ function renderProfileDetails(sources, scores) {
   `;
 }
 
+function renderToolReports(sources, scores) {
+  const pubChem = sources.find((source) => source.source === 'PubChem') || {};
+  const chembl = sources.find((source) => source.source === 'ChEMBL') || {};
+  const badge = (score) => {
+    const result = renderBadge(score);
+    return `<span class="score-tag ${result.className}">${result.label}</span>`;
+  };
+  const descriptor = (label, value) => `<div class="report-metric"><span>${label}</span><strong>${escapeHtml(value ?? 'N/A')}</strong></div>`;
+  const activityRows = (chembl.hits || []).slice(0, 5).map((hit) => `
+    <tr><td>${escapeHtml(hit.name || hit.chemblId || 'Record')}</td><td>${escapeHtml(hit.chemblId || 'N/A')}</td><td>${escapeHtml(hit.maxPhase ?? 'N/A')}</td></tr>
+  `).join('');
+  const alerts = scores.alerts?.length
+    ? scores.alerts.map((alert) => `<span class="alert-chip">${escapeHtml(alert)}</span>`).join('')
+    : '<span class="muted">No configured alert terms detected.</span>';
+
+  return `
+    <div class="tool-reports">
+      <div class="report-tabs" role="tablist" aria-label="Screening reports">
+        <button type="button" class="report-tab active" data-report-tab="pass-report">PASS / POST</button>
+        <button type="button" class="report-tab" data-report-tab="adme-report">SwissADME</button>
+        <button type="button" class="report-tab" data-report-tab="tox-report">STOPTOX</button>
+      </div>
+      <section id="pass-report" class="report-panel active" data-report-panel>
+        <div class="report-title"><div><p class="section-kicker">Activity context</p><h3>PASS / POST-style report</h3></div><div class="report-score">${scores.passPost}<small>/100</small>${badge(scores.passPost)}</div></div>
+        <p class="report-explanation">Prioritization signal based on public ChEMBL matches. It is not an official Way2Drug probability report.</p>
+        ${chembl.hits?.length ? `<table class="report-table"><thead><tr><th>Compound</th><th>ChEMBL ID</th><th>Max phase</th></tr></thead><tbody>${activityRows}</tbody></table>` : '<p class="muted">No ChEMBL activity context was returned.</p>'}
+      </section>
+      <section id="adme-report" class="report-panel" data-report-panel>
+        <div class="report-title"><div><p class="section-kicker">Structure properties</p><h3>SwissADME-style report</h3></div><div class="report-score">${scores.adme}<small>/100</small>${badge(scores.adme)}</div></div>
+        <p class="report-explanation">Calculated from public structure descriptors. It is not an official SwissADME result and does not include its proprietary plots.</p>
+        <div class="report-metrics">
+          ${descriptor('Molecular weight', pubChem.molecularWeight ? `${pubChem.molecularWeight} g/mol` : null)}
+          ${descriptor('XlogP', pubChem.xlogp)}
+          ${descriptor('TPSA', pubChem.tpsa ? `${pubChem.tpsa} A²` : null)}
+          ${descriptor('H-bond donors', pubChem.hBondDonors)}
+          ${descriptor('H-bond acceptors', pubChem.hBondAcceptors)}
+          ${descriptor('Rotatable bonds', pubChem.rotatableBonds)}
+        </div>
+      </section>
+      <section id="tox-report" class="report-panel" data-report-panel>
+        <div class="report-title"><div><p class="section-kicker">Hazard triage</p><h3>STOPTOX-style report</h3></div><div class="report-score">${scores.toxicity}<small>/100</small>${badge(scores.toxicity)}</div></div>
+        <p class="report-explanation">Structural-alert and public toxicology context. It is not an official STOPTOX prediction.</p>
+        <div class="alert-list">${alerts}</div>
+        <div class="report-metrics">${descriptor('Mutagenicity signal', scores.mutagenicity)}${descriptor('Sources returned', sources.length)}${descriptor('Confidence', `${scores.confidence}/100`)}</div>
+      </section>
+    </div>
+  `;
+}
+
 function renderResult(payload) {
   latestResult = payload;
   const { overview, sources, scores, limitations } = payload;
@@ -192,16 +241,18 @@ function renderResult(payload) {
       <p class="methodology-note">${escapeHtml(limitations || 'Preliminary screening signals require expert and experimental confirmation.')}</p>
     </div>
 
-    <div class="score-grid">
-      ${renderCards(scores)}
-    </div>
-
-    ${renderProfileDetails(sources, scores)}
+    ${renderToolReports(sources, scores)}
 
     ${renderSources(sources)}
   `;
 
   saveAssessmentBtn.classList.toggle('hidden', !currentToken);
+  resultsBox.querySelectorAll('[data-report-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      resultsBox.querySelectorAll('[data-report-tab]').forEach((item) => item.classList.toggle('active', item === tab));
+      resultsBox.querySelectorAll('[data-report-panel]').forEach((panel) => panel.classList.toggle('active', panel.id === tab.dataset.reportTab));
+    });
+  });
 }
 
 function prepareReview() {
