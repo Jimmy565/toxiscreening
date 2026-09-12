@@ -12,7 +12,7 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="ToxiScreen Hub | Compound screening workspace" />
     <meta name="twitter:description" content="Help test an early-stage compound screening workflow using public data sources." />
-    <link rel="stylesheet" href="styles.css?v=20260913" />
+    <link rel="stylesheet" href="styles.css?v=20260914" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#07111c" />
   </head>
@@ -70,15 +70,15 @@
               <div><p class="section-kicker">Start here</p><h2>Run a screening check</h2></div>
               <span class="panel-icon accent-icon">02</span>
             </div>
-            <p class="panel-intro">Cross-reference a compound against public chemistry and toxicology databases.</p>
+            <p class="panel-intro">Enter one new compound below, or upload your full SMILES list for batch screening.</p>
             <form id="screening-form">
-              <label for="input-type">Input type</label>
+              <label for="input-type">What are you entering?</label>
               <select id="input-type" name="inputType">
                 <option value="auto">Auto-detect</option>
                 <option value="name">Compound name</option>
                 <option value="smiles">SMILES structure</option>
               </select>
-              <label for="query">Compound name or SMILES</label>
+              <label for="query">New compound name or SMILES</label>
               <input id="query" name="query" type="text" value="aspirin" placeholder="e.g. aspirin or CC(=O)Oc1ccccc1C(=O)O" required />
               <button type="submit"><span>Assess compound</span><span aria-hidden="true">&#8594;</span></button>
             </form>
@@ -88,8 +88,8 @@
             </div>
             <div class="batch-box">
               <p class="section-kicker">Batch screening</p>
-              <h3>Process a SMILES list</h3>
-              <p class="muted">Upload a `.txt` or `.csv` file with one SMILES per line. Large lists run gradually to protect the public APIs.</p>
+              <h3>Add many SMILES at once</h3>
+              <p class="muted">Choose a `.txt` or `.csv` file with one SMILES per line. Large lists run gradually to protect the public APIs.</p>
               <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" />
               <div class="batch-actions"><button type="button" id="batch-start-btn" class="secondary" disabled>Start batch</button><button type="button" id="batch-download-btn" class="secondary hidden">Download CSV</button></div>
               <div id="batch-status" class="status-box hidden"></div>
@@ -162,6 +162,6 @@
         </form>
       </dialog>
     </div>
-    <script src="app.js?v=20260913"></script>
+    <script src="app.js?v=20260914"></script>
   </body>
 </html>
