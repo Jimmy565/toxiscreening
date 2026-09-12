@@ -305,6 +305,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   font-size: 0.9rem;
   margin-bottom: 8px;
 }
+.structure-image { display: block; width: 150px; height: 150px; object-fit: contain; margin: 10px 0; border-radius: 6px; background: #f4f6f3; }
+.smiles-line { overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 0.78rem; }
+.smiles-line span { color: var(--accent); font-family: Arial, sans-serif; font-weight: 700; }
+.hit-smiles { margin-top: 4px; color: var(--muted); overflow-wrap: anywhere; font: 0.76rem/1.45 Consolas, monospace; }
 
 .auth-panel,
 .history-panel {

@@ -217,18 +217,28 @@ async function queryPubChem(searchTerm) {
   }
 
   return normalizeSource('PubChem', {
+    cid: property.CID || null,
     formula: property.MolecularFormula || null,
     molecularWeight: safeNumber(property.MolecularWeight),
-    smiles: property.CanonicalSMILES || null,
+    smiles: property.CanonicalSMILES || property.ConnectivitySMILES || null,
     inchiKey: property.InChIKey || null,
+    structureImage: property.CID
+      ? `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${property.CID}/PNG`
+      : null,
     evidence: 'Structure and composition metadata retrieved from PubChem.',
   });
 }
 
 async function queryChEMBL(searchTerm) {
-  const url = `https://www.ebi.ac.uk/chembl/api/data/molecule?search=${encodeURIComponent(searchTerm)}&limit=5`;
-  const data = await fetchJson(url);
-  const molecules = data?.molecules || [];
+  const exactUrl = `https://www.ebi.ac.uk/chembl/api/data/molecule.json?pref_name__iexact=${encodeURIComponent(searchTerm)}&limit=5`;
+  const exactData = await fetchJson(exactUrl);
+  let molecules = exactData?.molecules || [];
+
+  if (!molecules.length) {
+    const searchUrl = `https://www.ebi.ac.uk/chembl/api/data/molecule.json?search=${encodeURIComponent(searchTerm)}&limit=5`;
+    const data = await fetchJson(searchUrl);
+    molecules = data?.molecules || [];
+  }
 
   if (!molecules.length) {
     return null;
@@ -237,9 +247,9 @@ async function queryChEMBL(searchTerm) {
   return normalizeSource('ChEMBL', {
     count: molecules.length,
     hits: molecules.slice(0, 5).map((molecule) => ({
-      name: molecule.pref_name || 'Unnamed molecule',
+      name: molecule.pref_name || molecule.molecule_chembl_id || 'Unnamed molecule',
       chemblId: molecule.molecule_chembl_id || null,
-      smiles: molecule.smiles || null,
+      smiles: molecule.molecule_structures?.canonical_smiles || null,
       maxPhase: molecule.max_phase || null,
     })),
     evidence: 'Bioactivity and medicinal chemistry candidate records from ChEMBL.',

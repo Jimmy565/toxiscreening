@@ -119,15 +119,21 @@ function renderSources(sources) {
     .map((entry) => {
       const hits = (entry.hits || [])
         .slice(0, 3)
-        .map((hit) => `<li>${escapeHtml(hit.name || hit.chemblId || hit.dtxsid || 'Record')}</li>`)
+        .map((hit) => `<li><strong>${escapeHtml(hit.name || hit.chemblId || hit.dtxsid || 'Record')}</strong>${hit.smiles ? `<div class="hit-smiles">${escapeHtml(hit.smiles)}</div>` : ''}</li>`)
         .join('');
 
-      const additional = entry.formula || entry.molecularWeight ? `<li>Formula: ${entry.formula || 'N/A'}</li><li>MW: ${entry.molecularWeight || 'N/A'}</li>` : '';
+      const additional = entry.formula || entry.molecularWeight || entry.smiles
+        ? `<li>Formula: ${escapeHtml(entry.formula || 'N/A')}</li><li>MW: ${escapeHtml(entry.molecularWeight || 'N/A')}</li>${entry.smiles ? `<li class="smiles-line"><span>SMILES:</span> ${escapeHtml(entry.smiles)}</li>` : ''}`
+        : '';
+      const image = entry.structureImage
+        ? `<img class="structure-image" src="${escapeHtml(entry.structureImage)}" alt="2D structure for ${escapeHtml(entry.source)}" loading="lazy" />`
+        : '';
 
       return `
         <li class="source-item">
           <strong>${escapeHtml(entry.source)}</strong>
           <div class="source-meta">${escapeHtml(entry.evidence || 'Public metadata available.')}</div>
+          ${image}
           <ul>${additional}${hits || '<li>No additional metadata available.</li>'}</ul>
         </li>
       `;
