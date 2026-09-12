@@ -23,11 +23,17 @@ const feedbackBtn = document.getElementById('feedback-btn');
 const feedbackDialog = document.getElementById('feedback-dialog');
 const feedbackForm = document.getElementById('feedback-form');
 const feedbackStatus = document.getElementById('feedback-status');
+const batchFile = document.getElementById('batch-file');
+const batchStartBtn = document.getElementById('batch-start-btn');
+const batchDownloadBtn = document.getElementById('batch-download-btn');
+const batchStatus = document.getElementById('batch-status');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
 let installPrompt = null;
 let currentUserRole = 'user';
+let batchEntries = [];
+let batchResults = [];
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
@@ -440,6 +446,56 @@ installBtn.addEventListener('click', async () => {
   await installPrompt.userChoice;
   installPrompt = null;
   installBtn.classList.add('hidden');
+});
+batchFile.addEventListener('change', async () => {
+  const file = batchFile.files?.[0];
+  if (!file) return;
+  const text = await file.text();
+  const entries = [...new Set(text.split(/\r?\n|,/).map((value) => value.trim()).filter(Boolean))];
+  batchEntries = entries.slice(0, 35000);
+  batchStartBtn.disabled = !batchEntries.length;
+  batchStatus.textContent = `${batchEntries.length.toLocaleString()} unique entries ready.`;
+  batchStatus.classList.remove('hidden');
+  if (entries.length > 35000) batchStatus.textContent += ' Only the first 35,000 entries will be processed.';
+});
+batchStartBtn.addEventListener('click', async () => {
+  if (!batchEntries.length) return;
+  batchStartBtn.disabled = true;
+  batchDownloadBtn.classList.add('hidden');
+  batchResults = [];
+  let completed = 0;
+  const queue = [...batchEntries.entries()];
+  const worker = async () => {
+    while (queue.length) {
+      const [, query] = queue.shift();
+      try {
+        const result = await fetchJson('/api/predict', {
+          method: 'POST',
+          body: JSON.stringify({ query, inputType: 'smiles' }),
+        });
+        batchResults.push({ query, status: result.overview.status, confidence: result.scores.confidence, toxicity: result.scores.toxicity, mutagenicity: result.scores.mutagenicity, adme: result.scores.adme, error: '' });
+      } catch (error) {
+        batchResults.push({ query, status: '', confidence: '', toxicity: '', mutagenicity: '', adme: '', error: error.message });
+      }
+      completed += 1;
+      batchStatus.textContent = `Processed ${completed.toLocaleString()} of ${batchEntries.length.toLocaleString()} entries.`;
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  batchStatus.textContent = `Batch complete: ${batchResults.length.toLocaleString()} results ready.`;
+  batchDownloadBtn.classList.remove('hidden');
+  batchStartBtn.disabled = false;
+});
+batchDownloadBtn.addEventListener('click', () => {
+  const headers = ['smiles', 'status', 'confidence', 'toxicity', 'mutagenicity', 'adme', 'error'];
+  const csv = [headers, ...batchResults.map((row) => headers.map((header) => row[header] ?? ''))]
+    .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  link.download = 'toxiscreen-batch-results.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
 });
 feedbackBtn.addEventListener('click', () => feedbackDialog.showModal());
 document.getElementById('close-feedback-btn').addEventListener('click', () => feedbackDialog.close());

@@ -86,6 +86,14 @@
               <h3><span class="source-status"></span> Connected public sources</h3>
               <ul><li>PubChem</li><li>ChEMBL</li><li>EPA CompTox</li></ul>
             </div>
+            <div class="batch-box">
+              <p class="section-kicker">Batch screening</p>
+              <h3>Process a SMILES list</h3>
+              <p class="muted">Upload a `.txt` or `.csv` file with one SMILES per line. Large lists run gradually to protect the public APIs.</p>
+              <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" />
+              <div class="batch-actions"><button type="button" id="batch-start-btn" class="secondary" disabled>Start batch</button><button type="button" id="batch-download-btn" class="secondary hidden">Download CSV</button></div>
+              <div id="batch-status" class="status-box hidden"></div>
+            </div>
             <div class="step-actions"><button type="button" id="back-to-account" class="secondary">Back to account</button></div>
           </section>
         </section>

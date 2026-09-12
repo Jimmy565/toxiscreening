@@ -196,6 +196,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   color: var(--muted);
   line-height: 1.8;
 }
+.batch-box { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.batch-box h3 { margin: 6px 0; }
+.batch-box input[type="file"] { width: 100%; margin: 12px 0; color: var(--muted); font: 0.8rem Arial, sans-serif; }
+.batch-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .results-empty {
   color: var(--muted);
