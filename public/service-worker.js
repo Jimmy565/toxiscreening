@@ -1,8 +1,8 @@
-const CACHE_NAME = 'toxiscreen-shell-v1';
+const CACHE_NAME = 'toxiscreen-shell-v2';
 const APP_SHELL = [
   '/',
-  '/styles.css?v=20260911',
-  '/app.js?v=20260911',
+  '/styles.css?v=20260912',
+  '/app.js?v=20260912',
   '/manifest.json',
   '/icon.svg',
 ];
