@@ -149,6 +149,35 @@ function renderSources(sources) {
   `;
 }
 
+function renderProfileDetails(sources, scores) {
+  const pubChem = sources.find((source) => source.source === 'PubChem') || {};
+  const descriptor = (label, value) => `<div class="descriptor"><span>${label}</span><strong>${escapeHtml(value ?? 'N/A')}</strong></div>`;
+
+  return `
+    <div class="profile-details">
+      <div class="profile-block">
+        <p class="section-kicker">SwissADME-style structure profile</p>
+        <div class="descriptor-grid">
+          ${descriptor('Molecular weight', pubChem.molecularWeight ? `${pubChem.molecularWeight} g/mol` : null)}
+          ${descriptor('XlogP', pubChem.xlogp)}
+          ${descriptor('TPSA', pubChem.tpsa ? `${pubChem.tpsa} A²` : null)}
+          ${descriptor('H-bond donors', pubChem.hBondDonors)}
+          ${descriptor('H-bond acceptors', pubChem.hBondAcceptors)}
+          ${descriptor('Rotatable bonds', pubChem.rotatableBonds)}
+        </div>
+      </div>
+      <div class="profile-block">
+        <p class="section-kicker">STOPTOX-style alert profile</p>
+        <p class="profile-copy">${scores.alerts?.length ? `Structural/name alert terms detected: ${escapeHtml(scores.alerts.join(', '))}.` : 'No configured structural alert terms detected in the submitted query.'}</p>
+      </div>
+      <div class="profile-block">
+        <p class="section-kicker">PASS/POST-style activity profile</p>
+        <p class="profile-copy">Public ChEMBL matches are shown as activity context. The app does not claim official PASS/POST probabilities.</p>
+      </div>
+    </div>
+  `;
+}
+
 function renderResult(payload) {
   latestResult = payload;
   const { overview, sources, scores, limitations } = payload;
@@ -166,6 +195,8 @@ function renderResult(payload) {
     <div class="score-grid">
       ${renderCards(scores)}
     </div>
+
+    ${renderProfileDetails(sources, scores)}
 
     ${renderSources(sources)}
   `;

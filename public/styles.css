@@ -233,6 +233,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .notes-list { display: grid; gap: 5px; margin-top: 16px; color: var(--muted); font-size: 0.9rem; }
 .notes-list span::before { content: '•'; color: var(--accent); margin-right: 8px; }
 .methodology-note { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+.profile-details { display: grid; gap: 12px; margin-top: 20px; }
+.profile-block { padding: 16px; border: 1px solid var(--border); border-radius: 6px; background: rgba(18, 40, 58, 0.46); }
+.descriptor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.descriptor { padding: 10px; border: 1px solid var(--border); border-radius: 5px; background: rgba(7, 17, 28, 0.45); }
+.descriptor span, .descriptor strong { display: block; }
+.descriptor span { color: var(--muted); font: 0.72rem Arial, sans-serif; }
+.descriptor strong { margin-top: 5px; font: 700 0.95rem Arial, sans-serif; }
+.profile-copy { margin: 10px 0 0; color: var(--muted); line-height: 1.5; }
 
 .summary-box h3 {
   margin-top: 0;
@@ -398,4 +406,5 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .step-line { margin: 0 8px; }
   .review-summary-row { display: grid; gap: 4px; }
   .review-summary-row strong { text-align: left; }
+  .descriptor-grid { grid-template-columns: repeat(2, 1fr); }
 }

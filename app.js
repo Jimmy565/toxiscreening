@@ -217,7 +217,7 @@ const getQualityBand = (score) => {
 
 async function queryPubChem(searchTerm, inputType = 'auto') {
   const lookupType = inputType === 'smiles' || (inputType === 'auto' && looksLikeSmiles(searchTerm)) ? 'smiles' : 'name';
-  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${lookupType}/${encodeURIComponent(searchTerm)}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,InChIKey/JSON`;
+  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${lookupType}/${encodeURIComponent(searchTerm)}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,InChIKey,XLogP,TPSA,HBondDonorCount,HBondAcceptorCount,RotatableBondCount,Complexity/JSON`;
   const data = await fetchJson(url);
   const property = data?.PropertyTable?.Properties?.[0];
 
@@ -229,6 +229,12 @@ async function queryPubChem(searchTerm, inputType = 'auto') {
     cid: property.CID || null,
     formula: property.MolecularFormula || null,
     molecularWeight: safeNumber(property.MolecularWeight),
+    xlogp: safeNumber(property.XLogP),
+    tpsa: safeNumber(property.TPSA),
+    hBondDonors: safeNumber(property.HBondDonorCount),
+    hBondAcceptors: safeNumber(property.HBondAcceptorCount),
+    rotatableBonds: safeNumber(property.RotatableBondCount),
+    complexity: safeNumber(property.Complexity),
     smiles: property.CanonicalSMILES || property.ConnectivitySMILES || null,
     inchiKey: property.InChIKey || null,
     structureImage: property.CID
