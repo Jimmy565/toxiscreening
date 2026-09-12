@@ -27,6 +27,7 @@ const feedbackStatus = document.getElementById('feedback-status');
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
 let installPrompt = null;
+let currentUserRole = 'user';
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
@@ -42,6 +43,7 @@ window.addEventListener('appinstalled', () => {
 function resetSession() {
   currentToken = '';
   latestResult = null;
+  currentUserRole = 'user';
   localStorage.removeItem('toxicity_token');
   sessionLabel.textContent = 'Guest session';
   authStatus.textContent = '';
@@ -210,6 +212,7 @@ async function handleAuth(mode) {
     });
 
     currentToken = payload.token || '';
+    currentUserRole = payload.user.role || 'user';
     localStorage.setItem('toxicity_token', currentToken);
     sessionLabel.textContent = `${payload.user.username} · ${payload.user.role || 'user'}`;
     setAuthMessage(`${mode === 'register' ? 'Registered' : 'Logged in'} successfully for ${payload.user.username}.`);
@@ -228,7 +231,8 @@ async function loadHistory() {
   }
 
   try {
-    const payload = await fetchJson(`/api/assessments?token=${encodeURIComponent(currentToken)}`);
+    const historyPath = currentUserRole === 'admin' ? '/api/admin/assessments' : '/api/assessments';
+    const payload = await fetchJson(`${historyPath}?token=${encodeURIComponent(currentToken)}`);
     const items = payload.assessments || [];
 
     if (!items.length) {
@@ -240,6 +244,7 @@ async function loadHistory() {
       .map((item) => `
         <div class="history-item">
           <div class="history-topline"><strong>${escapeHtml(item.query)}</strong><span class="history-score">${item.scores.confidence || 0}</span></div>
+          ${currentUserRole === 'admin' ? `<div class="muted">Submitted by ${escapeHtml(item.username || 'user')}</div>` : ''}
           <div class="muted">${new Date(item.createdAt).toLocaleString()}</div>
           <div class="history-meta"><span>Confidence</span><span>${escapeHtml(item.overview?.status || 'Not available')}</span></div>
         </div>
