@@ -7,7 +7,7 @@ A lightweight toxicity screening prototype that queries public online chemistry 
 - Search by compound name or SMILES
 - Direct SMILES lookup through PubChem when a structure string is entered
 - Tool-inspired profile views for PASS/POST-style activity, SwissADME-style descriptors, and STOPTOX-style structural-alert triage
-- Large batch SMILES upload with deduplication, chunked processing, pause/resume, cancellation, progress, and CSV export
+- Large batch SMILES upload with deduplication, rapid/steady processing modes, pause/resume, cancellation, progress, and CSV export
 - Queries public online sources:
   - PubChem
   - ChEMBL

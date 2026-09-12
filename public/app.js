@@ -29,6 +29,7 @@ const batchDownloadBtn = document.getElementById('batch-download-btn');
 const batchStatus = document.getElementById('batch-status');
 const batchPauseBtn = document.getElementById('batch-pause-btn');
 const batchCancelBtn = document.getElementById('batch-cancel-btn');
+const batchSpeed = document.getElementById('batch-speed');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
@@ -506,7 +507,8 @@ batchStartBtn.addEventListener('click', async () => {
       batchStatus.textContent = `Processed ${completed.toLocaleString()} of ${batchEntries.length.toLocaleString()} entries.`;
     }
   };
-  await Promise.all([worker(), worker(), worker(), worker()]);
+  const workerCount = Number(batchSpeed.value) || 10;
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
   batchStatus.textContent = batchCancelled
     ? `Batch cancelled: ${batchResults.length.toLocaleString()} results retained.`
     : `Batch complete: ${batchResults.length.toLocaleString()} results ready.`;
