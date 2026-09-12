@@ -5,6 +5,7 @@ A lightweight toxicity screening prototype that queries public online chemistry 
 ## Features
 
 - Search by compound name or SMILES
+- Direct SMILES lookup through PubChem when a structure string is entered
 - Queries public online sources:
   - PubChem
   - ChEMBL

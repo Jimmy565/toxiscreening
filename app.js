@@ -153,6 +153,14 @@ const fetchJson = async (url, options = {}) => {
 
 const cleanQuery = (value = '') => String(value).trim();
 
+const looksLikeSmiles = (value) => {
+  const query = cleanQuery(value);
+  return query.length >= 2
+    && /[A-Za-z]/.test(query)
+    && /[=#()\[\]\\/0-9]/.test(query)
+    && !/\s/.test(query);
+};
+
 const getTokenFromRequest = (req) => {
   const bodyToken = req.body?.token || req.query?.token;
   const headerToken = req.headers.authorization || req.headers.Authorization;
@@ -207,8 +215,9 @@ const getQualityBand = (score) => {
   return { label: 'Low confidence', className: 'score-low' };
 };
 
-async function queryPubChem(searchTerm) {
-  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(searchTerm)}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,InChIKey/JSON`;
+async function queryPubChem(searchTerm, inputType = 'auto') {
+  const lookupType = inputType === 'smiles' || (inputType === 'auto' && looksLikeSmiles(searchTerm)) ? 'smiles' : 'name';
+  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${lookupType}/${encodeURIComponent(searchTerm)}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,InChIKey/JSON`;
   const data = await fetchJson(url);
   const property = data?.PropertyTable?.Properties?.[0];
 
@@ -633,14 +642,19 @@ app.post('/api/assessments/:id/review', (req, res) => {
 
 app.post('/api/predict', async (req, res) => {
   const query = cleanQuery(req.body?.query || '');
+  const inputType = cleanQuery(req.body?.inputType || 'auto');
 
   if (!query || query.length < 2) {
     return res.status(400).json({ error: 'Please provide a valid compound name or SMILES string.' });
   }
 
+  if (!['auto', 'name', 'smiles'].includes(inputType)) {
+    return res.status(400).json({ error: 'Input type must be auto, name, or smiles.' });
+  }
+
   try {
     const [pubChemResult, chEMBLResult, compToxResult] = await Promise.allSettled([
-      queryPubChem(query),
+      queryPubChem(query, inputType),
       queryChEMBL(query),
       queryComptox(query),
     ]);

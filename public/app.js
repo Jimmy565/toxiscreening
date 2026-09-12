@@ -297,6 +297,7 @@ form.addEventListener('submit', async (event) => {
 
   const formData = new FormData(form);
   const query = (formData.get('query') || '').toString().trim();
+  const inputType = (formData.get('inputType') || 'auto').toString();
 
   if (!query) {
     resultsBox.innerHTML = '<p>Please enter a compound name or SMILES string.</p>';
@@ -311,7 +312,7 @@ form.addEventListener('submit', async (event) => {
     const response = await fetch('/api/predict', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, inputType }),
     });
 
     const payload = await response.json();

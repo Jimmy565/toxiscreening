@@ -72,8 +72,14 @@
             </div>
             <p class="panel-intro">Cross-reference a compound against public chemistry and toxicology databases.</p>
             <form id="screening-form">
+              <label for="input-type">Input type</label>
+              <select id="input-type" name="inputType">
+                <option value="auto">Auto-detect</option>
+                <option value="name">Compound name</option>
+                <option value="smiles">SMILES structure</option>
+              </select>
               <label for="query">Compound name or SMILES</label>
-              <input id="query" name="query" type="text" value="aspirin" placeholder="e.g. aspirin, caffeine, Cc1ccc(CC(C)C)cc1" required />
+              <input id="query" name="query" type="text" value="aspirin" placeholder="e.g. aspirin or CC(=O)Oc1ccccc1C(=O)O" required />
               <button type="submit"><span>Assess compound</span><span aria-hidden="true">&#8594;</span></button>
             </form>
             <div class="source-list">
