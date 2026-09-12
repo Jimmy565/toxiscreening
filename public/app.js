@@ -27,6 +27,8 @@ const batchFile = document.getElementById('batch-file');
 const batchStartBtn = document.getElementById('batch-start-btn');
 const batchDownloadBtn = document.getElementById('batch-download-btn');
 const batchStatus = document.getElementById('batch-status');
+const batchPauseBtn = document.getElementById('batch-pause-btn');
+const batchCancelBtn = document.getElementById('batch-cancel-btn');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
@@ -34,6 +36,26 @@ let installPrompt = null;
 let currentUserRole = 'user';
 let batchEntries = [];
 let batchResults = [];
+let batchPaused = false;
+let batchCancelled = false;
+
+function parseBatchEntries(text) {
+  const values = [];
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || /^(smiles|canonical_smiles|structure)$/i.test(trimmed)) continue;
+    const firstColumn = trimmed.split(',')[0].trim().replace(/^"|"$/g, '');
+    if (firstColumn && !/^(smiles|canonical_smiles|structure)$/i.test(firstColumn)) values.push(firstColumn);
+  }
+  return [...new Set(values)].slice(0, 100000);
+}
+
+function updateBatchControls(running) {
+  batchStartBtn.classList.toggle('hidden', running);
+  batchPauseBtn.classList.toggle('hidden', !running);
+  batchCancelBtn.classList.toggle('hidden', !running);
+  batchDownloadBtn.classList.toggle('hidden', !batchResults.length || running);
+}
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
@@ -450,22 +472,26 @@ batchFile.addEventListener('change', async () => {
   const file = batchFile.files?.[0];
   if (!file) return;
   const text = await file.text();
-  const entries = [...new Set(text.split(/\r?\n|,/).map((value) => value.trim()).filter(Boolean))];
-  batchEntries = entries.slice(0, 35000);
+  const entries = parseBatchEntries(text);
+  batchEntries = entries;
   batchStartBtn.disabled = !batchEntries.length;
   batchStatus.textContent = `${batchEntries.length.toLocaleString()} unique entries ready.`;
   batchStatus.classList.remove('hidden');
-  if (entries.length > 35000) batchStatus.textContent += ' Only the first 35,000 entries will be processed.';
+  if (entries.length >= 100000) batchStatus.textContent += ' The 100,000-entry safety limit was applied.';
 });
 batchStartBtn.addEventListener('click', async () => {
   if (!batchEntries.length) return;
   batchStartBtn.disabled = true;
-  batchDownloadBtn.classList.add('hidden');
+  batchPaused = false;
+  batchCancelled = false;
+  updateBatchControls(true);
   batchResults = [];
   let completed = 0;
   const queue = [...batchEntries.entries()];
   const worker = async () => {
     while (queue.length) {
+      while (batchPaused && !batchCancelled) await new Promise((resolve) => setTimeout(resolve, 250));
+      if (batchCancelled) return;
       const [, query] = queue.shift();
       try {
         const result = await fetchJson('/api/predict', {
@@ -480,10 +506,21 @@ batchStartBtn.addEventListener('click', async () => {
       batchStatus.textContent = `Processed ${completed.toLocaleString()} of ${batchEntries.length.toLocaleString()} entries.`;
     }
   };
-  await Promise.all([worker(), worker(), worker()]);
-  batchStatus.textContent = `Batch complete: ${batchResults.length.toLocaleString()} results ready.`;
-  batchDownloadBtn.classList.remove('hidden');
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  batchStatus.textContent = batchCancelled
+    ? `Batch cancelled: ${batchResults.length.toLocaleString()} results retained.`
+    : `Batch complete: ${batchResults.length.toLocaleString()} results ready.`;
+  updateBatchControls(false);
   batchStartBtn.disabled = false;
+});
+batchPauseBtn.addEventListener('click', () => {
+  batchPaused = !batchPaused;
+  batchPauseBtn.textContent = batchPaused ? 'Resume' : 'Pause';
+  batchStatus.textContent = batchPaused ? `Paused at ${batchResults.length.toLocaleString()} results.` : 'Resuming batch...';
+});
+batchCancelBtn.addEventListener('click', () => {
+  batchCancelled = true;
+  batchPaused = false;
 });
 batchDownloadBtn.addEventListener('click', () => {
   const headers = ['smiles', 'status', 'confidence', 'toxicity', 'mutagenicity', 'adme', 'error'];
