@@ -89,19 +89,20 @@ function renderBadge(score) {
 
 function renderCards(scores) {
   const entries = [
-    ['STOPTox', scores.stopTox],
-    ['PASS / POST', scores.passPost],
-    ['Toxicity', scores.toxicity],
-    ['Mutagenicity', scores.mutagenicity],
-    ['ADME', scores.adme],
+    ['STOPTOX-style', scores.stopTox, 'Structural-alert triage'],
+    ['PASS / POST-style', scores.passPost, 'Activity prioritization'],
+    ['Toxicity', scores.toxicity, 'Public hazard context'],
+    ['Mutagenicity', scores.mutagenicity, 'Alert-based signal'],
+    ['SwissADME-style', scores.adme, 'ADME descriptor triage'],
   ];
 
   return entries
-    .map(([label, score]) => {
+    .map(([label, score, description]) => {
       const badge = renderBadge(score);
       return `
         <article class="score-card">
           <h4>${label}</h4>
+          <p class="score-description">${description}</p>
           <div class="score-value">${score}</div>
           <span class="score-tag ${badge.className}">${badge.label}</span>
         </article>
@@ -150,7 +151,7 @@ function renderSources(sources) {
 
 function renderResult(payload) {
   latestResult = payload;
-  const { overview, sources, scores } = payload;
+  const { overview, sources, scores, limitations } = payload;
 
   resultsBox.innerHTML = `
     <div class="summary-box">
@@ -159,6 +160,7 @@ function renderResult(payload) {
       <p class="confidence-copy"><strong>Confidence:</strong> ${scores.confidence}/100 (${escapeHtml(overview.quality.label)})</p>
       <p>${escapeHtml(overview.dataSummary)}</p>
       <div class="notes-list">${overview.notes.map((note) => `<span>${escapeHtml(note)}</span>`).join('')}</div>
+      <p class="methodology-note">${escapeHtml(limitations || 'Preliminary screening signals require expert and experimental confirmation.')}</p>
     </div>
 
     <div class="score-grid">

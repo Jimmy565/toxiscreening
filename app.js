@@ -321,6 +321,20 @@ function buildExpertSummary(query, sources, scores) {
       ? `Cross-referenced with ${sources.length} public chemistry sources and a confidence score of ${scores.confidence}/100.`
       : 'No high-confidence public match could be confirmed from the selected online sources.',
     quality,
+    analysisProfiles: {
+      passPost: {
+        label: 'PASS/POST-style prioritization',
+        method: 'Heuristic activity-priority screen using public compound matches; not an official Way2Drug prediction.',
+      },
+      adme: {
+        label: 'SwissADME-style descriptors',
+        method: 'Public structure-property metadata and rule-based triage; not an official SwissADME calculation.',
+      },
+      toxicity: {
+        label: 'STOPTOX-style structural-alert triage',
+        method: 'Structure/name alert screening and public toxicology context; not an official STOPTOX result.',
+      },
+    },
     notes: [
       describeRisk(scores.stopTox, 'STOPTox'),
       describeRisk(scores.passPost, 'PASS/POST'),
@@ -683,6 +697,7 @@ app.post('/api/predict', async (req, res) => {
       sources,
       scores: riskSignals,
       dataSources,
+      limitations: 'These are preliminary screening signals, not official Way2Drug, SwissADME, or STOPTOX predictions and not a substitute for validated models or experimental testing.',
     });
   } catch (error) {
     console.error('Prediction error:', error);

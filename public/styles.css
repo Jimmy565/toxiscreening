@@ -232,6 +232,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .confidence-copy { color: var(--muted); }
 .notes-list { display: grid; gap: 5px; margin-top: 16px; color: var(--muted); font-size: 0.9rem; }
 .notes-list span::before { content: '•'; color: var(--accent); margin-right: 8px; }
+.methodology-note { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
 
 .summary-box h3 {
   margin-top: 0;
@@ -258,6 +259,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
+
+.score-description { min-height: 2.4em; margin: 0 0 12px; color: var(--muted); font: 0.78rem/1.35 Arial, sans-serif; }
 
 .score-value {
   font: 700 2.2rem/1 Arial, sans-serif;

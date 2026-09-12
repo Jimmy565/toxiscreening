@@ -6,6 +6,7 @@ A lightweight toxicity screening prototype that queries public online chemistry 
 
 - Search by compound name or SMILES
 - Direct SMILES lookup through PubChem when a structure string is entered
+- Tool-inspired profile views for PASS/POST-style activity, SwissADME-style descriptors, and STOPTOX-style structural-alert triage
 - Queries public online sources:
   - PubChem
   - ChEMBL
@@ -54,3 +55,5 @@ For feedback, testers can open the [GitHub issue form](https://github.com/Jimmy5
 ## Notes
 
 This is a prototype for data aggregation and screening workflow demonstration. It is not a regulatory toxicology model or a substitute for validated QSAR or experimental testing. Do not use the default local admin credentials in a deployed environment.
+
+The profile names describe the workflow shape only. The app does not claim to reproduce official Way2Drug, SwissADME, or STOPTOX models.
