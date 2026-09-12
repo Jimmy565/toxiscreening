@@ -10,6 +10,7 @@ const db = new DatabaseSync(dbPath);
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ROLES = new Set(['tester', 'reviewer', 'admin']);
 
 if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PASSWORD || ADMIN_PASSWORD === 'admin123')) {
   throw new Error('Set a unique ADMIN_PASSWORD before starting in production.');
@@ -65,6 +66,8 @@ const initDb = () => {
   if (!userColumnNames.has('role')) {
     db.exec('ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT "user"');
   }
+
+  db.prepare('UPDATE users SET role = ? WHERE role = ?').run('tester', 'user');
 
   const assessmentColumns = db.prepare('PRAGMA table_info(assessments)').all();
   const assessmentColumnNames = new Set(assessmentColumns.map((column) => column.name));
@@ -173,7 +176,9 @@ const getUserByToken = (token) => {
   return db.prepare('SELECT * FROM users WHERE token = ?').get(String(token));
 };
 
-const userIsAdmin = (user) => user && user.role === 'admin';
+const normalizedRole = (role) => role === 'user' ? 'tester' : (ROLES.has(role) ? role : 'tester');
+const userIsAdmin = (user) => user && normalizedRole(user.role) === 'admin';
+const userCanReview = (user) => user && ['admin', 'reviewer'].includes(normalizedRole(user.role));
 
 const normalizeSource = (sourceName, details) => ({
   source: sourceName,
@@ -353,8 +358,8 @@ app.get('/api/admin/feedback', (req, res) => {
   const token = getTokenFromRequest(req);
   const user = getUserByToken(token);
 
-  if (!user || !userIsAdmin(user)) {
-    return res.status(403).json({ error: 'Admin access required.' });
+  if (!user || !userCanReview(user)) {
+    return res.status(403).json({ error: 'Reviewer access required.' });
   }
 
   const rows = db.prepare('SELECT * FROM feedback ORDER BY created_at DESC').all();
@@ -365,8 +370,8 @@ app.get('/api/admin/assessments', (req, res) => {
   const token = getTokenFromRequest(req);
   const user = getUserByToken(token);
 
-  if (!user || !userIsAdmin(user)) {
-    return res.status(403).json({ error: 'Admin access required.' });
+  if (!user || !userCanReview(user)) {
+    return res.status(403).json({ error: 'Reviewer access required.' });
   }
 
   const rows = db.prepare('SELECT a.*, u.username FROM assessments a JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC').all();
@@ -422,6 +427,45 @@ app.get('/api/admin/export/csv', (req, res) => {
   return res.send(csv);
 });
 
+app.get('/api/admin/users', (req, res) => {
+  const user = getUserByToken(getTokenFromRequest(req));
+
+  if (!user || !userIsAdmin(user)) {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const users = db.prepare('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC').all();
+  return res.json({ users: users.map((item) => ({
+    id: item.id,
+    username: item.username,
+    role: normalizedRole(item.role),
+    createdAt: item.created_at,
+  })) });
+});
+
+app.patch('/api/admin/users/:id/role', (req, res) => {
+  const user = getUserByToken(getTokenFromRequest(req));
+
+  if (!user || !userIsAdmin(user)) {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const role = cleanQuery(req.body?.role || '');
+  const userId = Number(req.params?.id);
+
+  if (!ROLES.has(role) || !Number.isInteger(userId)) {
+    return res.status(400).json({ error: 'Role must be tester, reviewer, or admin and ID must be valid.' });
+  }
+
+  const target = db.prepare('SELECT id, username FROM users WHERE id = ?').get(userId);
+  if (!target) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, userId);
+  return res.json({ user: { id: target.id, username: target.username, role } });
+});
+
 app.post('/api/register', (req, res) => {
   const username = cleanQuery(req.body?.username || '');
   const password = String(req.body?.password || '');
@@ -447,7 +491,7 @@ app.post('/api/register', (req, res) => {
     user: {
       id: result.lastInsertRowid,
       username,
-      role: 'user',
+      role: 'tester',
     },
     token,
   });
@@ -470,7 +514,7 @@ app.post('/api/login', (req, res) => {
     user: {
       id: user.id,
       username: user.username,
-      role: user.role || 'user',
+      role: normalizedRole(user.role),
     },
     token: user.token,
   });
@@ -551,13 +595,19 @@ app.post('/api/assessments/:id/review', (req, res) => {
     return res.status(400).json({ error: 'Status must be one of: pending, approved, rejected.' });
   }
 
-  const assessment = db.prepare('SELECT * FROM assessments WHERE id = ? AND user_id = ?').get(assessmentId, user.id);
+  const assessment = userCanReview(user)
+    ? db.prepare('SELECT * FROM assessments WHERE id = ?').get(assessmentId)
+    : db.prepare('SELECT * FROM assessments WHERE id = ? AND user_id = ?').get(assessmentId, user.id);
   if (!assessment) {
     return res.status(404).json({ error: 'Assessment not found.' });
   }
 
-  const updated = db.prepare('UPDATE assessments SET status = ?, reviewer_note = ? WHERE id = ? AND user_id = ?');
-  updated.run(status, reviewerNote, assessmentId, user.id);
+  if (userCanReview(user)) {
+    db.prepare('UPDATE assessments SET status = ?, reviewer_note = ? WHERE id = ?').run(status, reviewerNote, assessmentId);
+  } else {
+    db.prepare('UPDATE assessments SET status = ?, reviewer_note = ? WHERE id = ? AND user_id = ?')
+      .run(status, reviewerNote, assessmentId, user.id);
+  }
 
   return res.json({
     assessment: {

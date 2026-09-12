@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { app } = require('../app.js');
 
-const request = async (path, payload) => {
+const request = async (path, payload, method) => {
   const server = app.listen(0);
   const { port } = await new Promise((resolve) => server.once('listening', () => resolve(server.address())));
 
@@ -15,7 +15,7 @@ const request = async (path, payload) => {
         hostname: 'localhost',
         port,
         path,
-        method: payload ? 'POST' : 'GET',
+        method: method || (payload ? 'POST' : 'GET'),
         headers: payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } : {},
       }, (res) => {
         let data = '';
@@ -75,6 +75,7 @@ test('register endpoint creates a user account', async () => {
   assert.equal(response.status, 201);
   const payload = JSON.parse(response.body);
   assert.equal(payload.user.username, username);
+  assert.equal(payload.user.role, 'tester');
   assert.ok(payload.token);
 });
 
@@ -134,4 +135,20 @@ test('admin can list all assessments and export csv', async () => {
   assert.match(feedbackResponse.body, /"feedback"/);
   assert.equal(exportResponse.status, 200);
   assert.match(exportResponse.body, /query/i);
+});
+
+test('admin can assign the reviewer role', async () => {
+  const adminLogin = await request('/api/login', { username: 'admin', password: 'admin123' });
+  const adminToken = JSON.parse(adminLogin.body).token;
+  const username = `role_user_${Date.now()}`;
+  const registered = await request('/api/register', { username, password: 'demo123' });
+  const userId = JSON.parse(registered.body).user.id;
+
+  const response = await request(`/api/admin/users/${userId}/role`, {
+    token: adminToken,
+    role: 'reviewer',
+  }, 'PATCH');
+
+  assert.equal(response.status, 200);
+  assert.equal(JSON.parse(response.body).user.role, 'reviewer');
 });

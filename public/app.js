@@ -231,7 +231,7 @@ async function loadHistory() {
   }
 
   try {
-    const historyPath = currentUserRole === 'admin' ? '/api/admin/assessments' : '/api/assessments';
+    const historyPath = ['admin', 'reviewer'].includes(currentUserRole) ? '/api/admin/assessments' : '/api/assessments';
     const payload = await fetchJson(`${historyPath}?token=${encodeURIComponent(currentToken)}`);
     const items = payload.assessments || [];
 
@@ -244,7 +244,7 @@ async function loadHistory() {
       .map((item) => `
         <div class="history-item">
           <div class="history-topline"><strong>${escapeHtml(item.query)}</strong><span class="history-score">${item.scores.confidence || 0}</span></div>
-          ${currentUserRole === 'admin' ? `<div class="muted">Submitted by ${escapeHtml(item.username || 'user')}</div>` : ''}
+          ${['admin', 'reviewer'].includes(currentUserRole) ? `<div class="muted">Submitted by ${escapeHtml(item.username || 'user')}</div>` : ''}
           <div class="muted">${new Date(item.createdAt).toLocaleString()}</div>
           <div class="history-meta"><span>Confidence</span><span>${escapeHtml(item.overview?.status || 'Not available')}</span></div>
         </div>

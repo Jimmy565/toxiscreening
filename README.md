@@ -11,6 +11,7 @@ A lightweight toxicity screening prototype that queries public online chemistry 
   - EPA CompTox
 - Aggregates the results into a quick screening overview
 - Provides a simple web dashboard for reviewing scores
+- Role-based access with `tester`, `reviewer`, and `admin` roles
 
 ## Run locally
 
@@ -30,6 +31,14 @@ A lightweight toxicity screening prototype that queries public online chemistry 
 5. Add a paid persistent disk later if you need user accounts and assessments to survive redeploys and restarts.
 
 The included `render.yaml` defines these settings. On the free plan, SQLite data is temporary and can be lost when the service is redeployed or restarted. Use the free deployment for testing and demonstrations until persistent storage is added.
+
+### Roles
+
+- `tester`: run screenings, save personal assessments, and submit feedback.
+- `reviewer`: view all saved assessments, export CSV, and update review status and notes.
+- `admin`: all reviewer permissions plus user-role management.
+
+Admins can list users with `GET /api/admin/users?token=...` and change a role with `PATCH /api/admin/users/:id/role`, sending `{ "role": "reviewer" }` in the JSON body.
 
 ## Install as an app
 
