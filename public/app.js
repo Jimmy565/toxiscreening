@@ -148,10 +148,10 @@ function renderSources(sources) {
     .join('');
 
   return `
-    <div class="sources-list">
-      <h3>Public database hits</h3>
+    <details class="sources-list">
+      <summary>Public database evidence <span>${sources.length} sources</span></summary>
       <ul>${html}</ul>
-    </div>
+    </details>
   `;
 }
 
@@ -248,7 +248,6 @@ function renderResult(payload) {
     </div>
 
     ${renderToolReports(sources, scores)}
-
     ${renderSources(sources)}
   `;
 

@@ -328,6 +328,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .sources-list {
   margin-top: 22px;
 }
+.sources-list summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; color: var(--text); font-weight: 700; }
+.sources-list summary::-webkit-details-marker { display: none; }
+.sources-list summary::after { content: '+'; color: var(--accent); font: 1.2rem Arial, sans-serif; }
+.sources-list[open] summary::after { content: '-'; }
+.sources-list summary span { margin-left: auto; margin-right: 12px; color: var(--muted); font: 0.75rem Arial, sans-serif; }
 
 .sources-list ul {
   list-style: none;
