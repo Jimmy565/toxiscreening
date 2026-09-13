@@ -118,11 +118,11 @@ function renderBadge(score) {
 
 function renderCards(scores) {
   const entries = [
-    ['STOPTOX-style', scores.stopTox, 'Structural-alert triage'],
-    ['PASS / POST-style', scores.passPost, 'Activity prioritization'],
-    ['Toxicity', scores.toxicity, 'Public hazard context'],
-    ['Mutagenicity', scores.mutagenicity, 'Alert-based signal'],
-    ['SwissADME-style', scores.adme, 'ADME descriptor triage'],
+    ['ToxiScreen hazard triage', scores.hazardTriage, 'Structural-alert triage'],
+    ['Activity signal', scores.passPost, 'Public activity prioritization'],
+    ['Toxicity signal', scores.toxicity, 'Public hazard context'],
+    ['Mutagenicity signal', scores.mutagenicity, 'Alert-based signal'],
+    ['ADME signal', scores.adme, 'Descriptor triage'],
   ];
 
   return entries
@@ -196,12 +196,12 @@ function renderProfileDetails(sources, scores) {
         </div>
       </div>
       <div class="profile-block">
-        <p class="section-kicker">STOPTOX-style alert profile</p>
+        <p class="section-kicker">ToxiScreen alert profile</p>
         <p class="profile-copy">${scores.alerts?.length ? `Structural/name alert terms detected: ${escapeHtml(scores.alerts.join(', '))}.` : 'No configured structural alert terms detected in the submitted query.'}</p>
       </div>
       <div class="profile-block">
-        <p class="section-kicker">PASS/POST-style activity profile</p>
-        <p class="profile-copy">Public ChEMBL matches are shown as activity context. The app does not claim official PASS/POST probabilities.</p>
+        <p class="section-kicker">Activity signal profile</p>
+        <p class="profile-copy">Public ChEMBL matches are shown as activity context. This is a ToxiScreen view inspired by public activity screening tools.</p>
       </div>
     </div>
   `;
@@ -225,18 +225,18 @@ function renderToolReports(sources, scores) {
   return `
     <div class="tool-reports">
       <div class="report-tabs" role="tablist" aria-label="Screening reports">
-        <button type="button" class="report-tab active" data-report-tab="pass-report">PASS / POST</button>
-        <button type="button" class="report-tab" data-report-tab="adme-report">SwissADME</button>
-        <button type="button" class="report-tab" data-report-tab="tox-report">STOPTOX</button>
+        <button type="button" class="report-tab active" data-report-tab="pass-report">Activity signal</button>
+        <button type="button" class="report-tab" data-report-tab="adme-report">ADME signal</button>
+        <button type="button" class="report-tab" data-report-tab="tox-report">Hazard triage</button>
       </div>
       <section id="pass-report" class="report-panel active" data-report-panel>
-        <div class="report-title"><div><p class="section-kicker">Activity context</p><h3>PASS / POST-style report</h3></div><div class="report-score">${scores.passPost}<small>/100</small>${badge(scores.passPost)}</div></div>
-        <p class="report-explanation">Prioritization signal based on public ChEMBL matches. It is not an official Way2Drug probability report.</p>
+        <div class="report-title"><div><p class="section-kicker">Activity context</p><h3>Activity signal report</h3></div><div class="report-score">${scores.passPost}<small>/100</small>${badge(scores.passPost)}</div></div>
+        <p class="report-explanation">Prioritization signal based on public ChEMBL matches, presented as a ToxiScreen activity view inspired by public screening workflows.</p>
         ${chembl.hits?.length ? `<table class="report-table"><thead><tr><th>Compound</th><th>ChEMBL ID</th><th>Max phase</th></tr></thead><tbody>${activityRows}</tbody></table>` : '<p class="muted">No ChEMBL activity context was returned.</p>'}
       </section>
       <section id="adme-report" class="report-panel" data-report-panel>
-        <div class="report-title"><div><p class="section-kicker">Structure properties</p><h3>SwissADME-style report</h3></div><div class="report-score">${scores.adme}<small>/100</small>${badge(scores.adme)}</div></div>
-        <p class="report-explanation">Calculated from public structure descriptors. It is not an official SwissADME result and does not include its proprietary plots.</p>
+        <div class="report-title"><div><p class="section-kicker">Structure properties</p><h3>ADME signal report</h3></div><div class="report-score">${scores.adme}<small>/100</small>${badge(scores.adme)}</div></div>
+        <p class="report-explanation">Calculated from public structure descriptors and presented as a ToxiScreen ADME-style signal. It is not an official SwissADME result.</p>
         <div class="report-metrics">
           ${descriptor('Molecular weight', pubChem.molecularWeight ? `${pubChem.molecularWeight} g/mol` : null)}
           ${descriptor('XlogP', pubChem.xlogp)}
@@ -247,8 +247,8 @@ function renderToolReports(sources, scores) {
         </div>
       </section>
       <section id="tox-report" class="report-panel" data-report-panel>
-        <div class="report-title"><div><p class="section-kicker">Hazard triage</p><h3>STOPTOX-style report</h3></div><div class="report-score">${scores.toxicity}<small>/100</small>${badge(scores.toxicity)}</div></div>
-        <p class="report-explanation">Structural-alert and public toxicology context. It is not an official STOPTOX prediction.</p>
+        <div class="report-title"><div><p class="section-kicker">Hazard triage</p><h3>ToxiScreen hazard report</h3></div><div class="report-score">${scores.hazardTriage}<small>/100</small>${badge(scores.hazardTriage)}</div></div>
+        <p class="report-explanation">Structural-alert and public toxicology context generated by ToxiScreen’s own screening logic.</p>
         <div class="alert-list">${alerts}</div>
         <div class="report-metrics">${descriptor('Mutagenicity signal', scores.mutagenicity)}${descriptor('Sources returned', sources.length)}${descriptor('Confidence', `${scores.confidence}/100`)}</div>
       </section>

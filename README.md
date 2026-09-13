@@ -1,12 +1,12 @@
 # ToxiScreen Hub
 
-A lightweight toxicity screening prototype that queries public online chemistry databases and produces a simple assessment across STOPTox, PASS/POST, toxicity, mutagenicity, and ADME categories.
+A lightweight toxicity screening prototype that queries public online chemistry databases and produces a simple assessment across ToxiScreen hazard triage, PASS/POST, toxicity, mutagenicity, and ADME categories.
 
 ## Features
 
 - Search by compound name or SMILES
 - Direct SMILES lookup through PubChem when a structure string is entered
-- Tool-inspired profile views for PASS/POST-style activity, SwissADME-style descriptors, and STOPTOX-style structural-alert triage
+- Tool-inspired profile views for PASS/POST-style activity, SwissADME-style descriptors, and ToxiScreen hazard triage
 - Large batch SMILES upload with deduplication, rapid/steady processing modes, pause/resume, cancellation, progress, and CSV export
 - Queries public online sources:
   - PubChem
@@ -57,4 +57,4 @@ For feedback, testers can open the [GitHub issue form](https://github.com/Jimmy5
 
 This is a prototype for data aggregation and screening workflow demonstration. It is not a regulatory toxicology model or a substitute for validated QSAR or experimental testing. Do not use the default local admin credentials in a deployed environment.
 
-The profile names describe the workflow shape only. The app does not claim to reproduce official Way2Drug, SwissADME, or STOPTOX models.
+The profile names describe the workflow shape only. The app does not claim to reproduce official Way2Drug or SwissADME models and keeps its own ToxiScreen terminology throughout.

@@ -38,25 +38,25 @@ const request = async (path, payload, method) => {
   }
 };
 
-test('health endpoint responds successfully', async () => {
+test('ToxiScreen health check responds successfully', async () => {
   const response = await request('/api/health');
   assert.equal(response.status, 200);
   assert.match(response.body, /"ok":true/);
 });
 
-test('health endpoint includes baseline security headers', async () => {
+test('ToxiScreen health check includes the required security headers', async () => {
   const response = await request('/api/health');
   assert.equal(response.headers['x-content-type-options'], 'nosniff');
   assert.equal(response.headers['x-frame-options'], 'DENY');
 });
 
-test('predict endpoint rejects empty search input', async () => {
+test('ToxiScreen rejects empty compound submissions', async () => {
   const response = await request('/api/predict', { query: '' });
   assert.equal(response.status, 400);
   assert.match(response.body, /Please provide a valid compound/);
 });
 
-test('feedback endpoint stores structured tester feedback', async () => {
+test('ToxiScreen stores structured tester feedback', async () => {
   const response = await request('/api/feedback', {
     category: 'ux',
     severity: 'medium',
@@ -69,7 +69,7 @@ test('feedback endpoint stores structured tester feedback', async () => {
   assert.match(response.body, /"category":"ux"/);
 });
 
-test('register endpoint creates a user account', async () => {
+test('ToxiScreen creates a tester account', async () => {
   const username = `demo_user_${Date.now()}`;
   const response = await request('/api/register', { username, password: 'demo123' });
   assert.equal(response.status, 201);
@@ -79,7 +79,7 @@ test('register endpoint creates a user account', async () => {
   assert.ok(payload.token);
 });
 
-test('assessment history endpoint returns saved entries for the user', async () => {
+test('ToxiScreen returns saved assessment history for the user', async () => {
   const username = `history_user_${Date.now()}`;
   const registerResponse = await request('/api/register', { username, password: 'demo123' });
   const token = JSON.parse(registerResponse.body).token;
@@ -87,7 +87,7 @@ test('assessment history endpoint returns saved entries for the user', async () 
   await request('/api/assessments', {
     token,
     query: 'acetaminophen',
-    scores: { stopTox: 30, passPost: 40, toxicity: 50, mutagenicity: 45, adme: 60, confidence: 70 },
+    scores: { hazardTriage: 30, passPost: 40, toxicity: 50, mutagenicity: 45, adme: 60, confidence: 70 },
     overview: { status: 'Candidate for further evaluation' }
   });
 
@@ -98,7 +98,7 @@ test('assessment history endpoint returns saved entries for the user', async () 
   assert.ok(history.assessments.length >= 1);
 });
 
-test('review endpoint updates an assessment status and note', async () => {
+test('ToxiScreen updates assessment review status and note', async () => {
   const username = `review_user_${Date.now()}`;
   const registerResponse = await request('/api/register', { username, password: 'demo123' });
   const token = JSON.parse(registerResponse.body).token;
@@ -106,7 +106,7 @@ test('review endpoint updates an assessment status and note', async () => {
   const created = await request('/api/assessments', {
     token,
     query: 'benzene',
-    scores: { stopTox: 80, passPost: 60, toxicity: 90, mutagenicity: 88, adme: 70, confidence: 82 },
+    scores: { hazardTriage: 80, passPost: 60, toxicity: 90, mutagenicity: 88, adme: 70, confidence: 82 },
     overview: { status: 'Requires hazard review' }
   });
 
@@ -123,7 +123,7 @@ test('review endpoint updates an assessment status and note', async () => {
   assert.match(reviewPayload.assessment.reviewerNote, /manual review/);
 });
 
-test('admin can list all assessments and export csv', async () => {
+test('ToxiScreen lists assessments and exports CSV for admins', async () => {
   const adminLogin = await request('/api/login', { username: 'admin', password: 'admin123' });
   const adminToken = JSON.parse(adminLogin.body).token;
 
@@ -137,7 +137,7 @@ test('admin can list all assessments and export csv', async () => {
   assert.match(exportResponse.body, /query/i);
 });
 
-test('admin can assign the reviewer role', async () => {
+test('ToxiScreen assigns the reviewer role to a user', async () => {
   const adminLogin = await request('/api/login', { username: 'admin', password: 'admin123' });
   const adminToken = JSON.parse(adminLogin.body).token;
   const username = `role_user_${Date.now()}`;
