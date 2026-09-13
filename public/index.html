@@ -12,7 +12,7 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="ToxiScreen Hub | Compound screening workspace" />
     <meta name="twitter:description" content="Help test an early-stage compound screening workflow using public data sources." />
-    <link rel="stylesheet" href="styles.css?v=20260916" />
+    <link rel="stylesheet" href="styles.css?v=20260917" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#07111c" />
   </head>
@@ -87,16 +87,18 @@
               <ul><li>PubChem</li><li>ChEMBL</li><li>EPA CompTox</li></ul>
             </div>
             <div class="batch-box">
-              <p class="section-kicker">Batch screening</p>
-              <h3>Add many SMILES at once</h3>
-              <p class="muted">Choose a `.txt` or `.csv` file with one SMILES per line. Large lists are processed in small chunks to protect the public APIs.</p>
+              <p class="section-kicker">Data workspace</p>
+              <h3>Feed a compound dataset</h3>
+              <p class="muted">Upload a CSV/TXT file or paste one SMILES per line. The first CSV column is used as the structure input.</p>
               <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" />
+              <label for="batch-text">Or paste CSV/SMILES data</label>
+              <textarea id="batch-text" rows="4" placeholder="smiles&#10;CCO&#10;CC(=O)Oc1ccccc1C(=O)O"></textarea>
               <label for="batch-speed">Processing speed</label>
               <select id="batch-speed">
                 <option value="4">Steady - 4 compounds at once</option>
                 <option value="10" selected>Rapid - 10 compounds at once</option>
               </select>
-              <div class="batch-actions"><button type="button" id="batch-start-btn" class="secondary" disabled>Start batch</button><button type="button" id="batch-pause-btn" class="secondary hidden">Pause</button><button type="button" id="batch-cancel-btn" class="secondary hidden">Cancel</button><button type="button" id="batch-download-btn" class="secondary hidden">Download CSV</button></div>
+              <div class="batch-actions"><button type="button" id="batch-use-text-btn" class="secondary">Use pasted data</button><button type="button" id="batch-start-btn" class="secondary" disabled>Start batch</button><button type="button" id="batch-pause-btn" class="secondary hidden">Pause</button><button type="button" id="batch-cancel-btn" class="secondary hidden">Cancel</button><button type="button" id="batch-download-btn" class="secondary hidden">Download CSV</button></div>
               <div id="batch-status" class="status-box hidden"></div>
             </div>
             <div class="step-actions"><button type="button" id="back-to-account" class="secondary">Back to account</button></div>
@@ -167,6 +169,6 @@
         </form>
       </dialog>
     </div>
-    <script src="app.js?v=20260916"></script>
+    <script src="app.js?v=20260917"></script>
   </body>
 </html>

@@ -30,6 +30,8 @@ const batchStatus = document.getElementById('batch-status');
 const batchPauseBtn = document.getElementById('batch-pause-btn');
 const batchCancelBtn = document.getElementById('batch-cancel-btn');
 const batchSpeed = document.getElementById('batch-speed');
+const batchText = document.getElementById('batch-text');
+const batchUseTextBtn = document.getElementById('batch-use-text-btn');
 
 let currentToken = localStorage.getItem('toxicity_token') || '';
 let latestResult = null;
@@ -49,6 +51,15 @@ function parseBatchEntries(text) {
     if (firstColumn && !/^(smiles|canonical_smiles|structure)$/i.test(firstColumn)) values.push(firstColumn);
   }
   return [...new Set(values)].slice(0, 100000);
+}
+
+function prepareBatch(text) {
+  const entries = parseBatchEntries(text);
+  batchEntries = entries;
+  batchStartBtn.disabled = !batchEntries.length;
+  batchStatus.textContent = `${batchEntries.length.toLocaleString()} unique entries ready.`;
+  batchStatus.classList.remove('hidden');
+  if (entries.length >= 100000) batchStatus.textContent += ' The 100,000-entry safety limit was applied.';
 }
 
 function updateBatchControls(running) {
@@ -185,7 +196,7 @@ function renderProfileDetails(sources, scores) {
   return `
     <div class="profile-details">
       <div class="profile-block">
-        <p class="section-kicker">SwissADME-style structure profile</p>
+        <p class="section-kicker">Structure profile</p>
         <div class="descriptor-grid">
           ${descriptor('Molecular weight', pubChem.molecularWeight ? `${pubChem.molecularWeight} g/mol` : null)}
           ${descriptor('XlogP', pubChem.xlogp)}
@@ -473,13 +484,9 @@ batchFile.addEventListener('change', async () => {
   const file = batchFile.files?.[0];
   if (!file) return;
   const text = await file.text();
-  const entries = parseBatchEntries(text);
-  batchEntries = entries;
-  batchStartBtn.disabled = !batchEntries.length;
-  batchStatus.textContent = `${batchEntries.length.toLocaleString()} unique entries ready.`;
-  batchStatus.classList.remove('hidden');
-  if (entries.length >= 100000) batchStatus.textContent += ' The 100,000-entry safety limit was applied.';
+  prepareBatch(text);
 });
+batchUseTextBtn.addEventListener('click', () => prepareBatch(batchText.value));
 batchStartBtn.addEventListener('click', async () => {
   if (!batchEntries.length) return;
   batchStartBtn.disabled = true;

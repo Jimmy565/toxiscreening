@@ -199,6 +199,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .batch-box { margin-top: 24px; padding: 20px 16px 4px; border: 1px solid rgba(245, 184, 91, 0.28); border-radius: 6px; background: rgba(245, 184, 91, 0.05); }
 .batch-box h3 { margin: 6px 0; }
 .batch-box input[type="file"] { width: 100%; margin: 12px 0; color: var(--muted); font: 0.8rem Arial, sans-serif; }
+.batch-box textarea { width: 100%; margin: 8px 0 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(11, 20, 34, 0.8); color: var(--text); padding: 10px 12px; font: 0.85rem/1.45 Consolas, monospace; resize: vertical; }
 .batch-box select { width: 100%; margin: 6px 0 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(11, 20, 34, 0.8); color: var(--text); padding: 10px 12px; font: inherit; }
 .batch-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
